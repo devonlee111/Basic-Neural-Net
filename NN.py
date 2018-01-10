@@ -1,5 +1,5 @@
 import numpy as np
-
+import sys
 
 #Global Variables
 # BinaryInput
@@ -12,7 +12,9 @@ y = np.array([[0],[1],[1],[0]])
 #NAND Output
 #y = np.array([[1],[1],[1],[0]])
 
-desiredAccuracy = .01
+layers = -1
+shape = []
+desiredAccuracy = .05
 #learning rate
 lr = .1
 inputNeurons = X.shape[1]
@@ -38,13 +40,32 @@ biases = []
 weights.append(wh)
 weights.append(wout)
 
+#Parse Command Line Arguments
+def parseArgs():
+	global layers
+	if len(sys.argv) == 1:
+		return False
+
+	layers = (int)(sys.argv[1])
+	if (layers < 3):
+		return False
+	if (len(sys.argv) - 2) != layers:
+		print "Invalid Neural Network Dimensions"
+		sys.exit(0)
+
+	for layerSize in range(2, len(sys.argv)):
+		shape.append(layerSize)
+
+	return True
+
+#Initialized Weight List 
 def initWeights(shape, layers):
 	global weights
-	for layer in range(0, layers):
-		for weight in range(0, shape[layer]):
-			weight = np.random.normal(loc = .5, scale = .01, size = 1)
-			weights.append(weight)
+	for layer in range(0, layers - 1):
+		layerWeights = np.random.normal(loc = .5, scale = .01, size = (shape[layer], shape[layer + 1]))
+		weights.append(layerWeights)
 
+#Initialized Neurpn List
 def initNeurons(shape, layers):
 	global neurons
 	for layer in range(0, layers):
@@ -53,11 +74,24 @@ def initNeurons(shape, layers):
 			neuronLayer.append(0)
 		neurons.append(neuronLayer)
 
+#Initialize Bias List
 def initBiases(layers):
 	global biases
 	for layer in range(0, layers):
 		bias = np.random.normal(loc = .5, scale = .01, size = 1)
 		biases.append(bias)
+
+#Fully Initialized Neural Net
+def initNeuralNet():
+	global layers
+	global shape
+	if parseArgs() == False:
+		print "Neural Net Must Have At Least 3 Layers (input, hidden, output)"
+		sys.exit(0)
+
+	initWeights(shape, layers)
+	initNeurons(shape, layers)
+	initBiases(layers)
 
 #Sigmoid Activation Function
 def sigmoid(x):
@@ -94,6 +128,7 @@ def backwardPass(doutput, layer, pervLayer, outputWeights):
 
 def train(X, y, lr):
 	#Initialize variables
+	global layers
 	global bh
 	global inputNeurons
 	global hiddenLayerNeurons
@@ -101,8 +136,13 @@ def train(X, y, lr):
 	global wh
 	global wout
 	global bout
+	
+	#if layers <= 0:
+		#print "Neural Net Not Initialized"
+		#sys.exit(0)
+
 	epochElapsed = 0
-	epoch = 1000000
+	maxEpoch = 1000000
 
 	while True:
 		#Forward Propogation
@@ -110,8 +150,10 @@ def train(X, y, lr):
 		output = forwardPass(hiddenLayer, wout, bout)
 
 		#Check if we reached desired accuracy
-		if checkOutput(output, desiredAccuracy) == 1 or epochElapsed >= epoch:
-			break	
+		if checkOutput(output, desiredAccuracy) == 1 or epochElapsed >= maxEpoch:
+			break
+
+		#Increase the number of elapsed epochs
 		epochElapsed += 1
 
 		#Back Propogation
@@ -120,8 +162,6 @@ def train(X, y, lr):
 		dOutput = E * slopeOutputLayer
 		wout += hiddenLayer.T.dot(dOutput) * lr
 		bout += np.sum(dOutput) * lr
-
-		#backwardPass(dOutput, hiddenLayer, X, wh)
 
 		hiddenLayerError = dOutput.dot(wout.T)
 		slopeHiddenLayer = sigmoidDerivative(hiddenLayer)
@@ -132,4 +172,5 @@ def train(X, y, lr):
 	print epochElapsed
 	print output
 
+initNeuralNet()
 train(X, y, lr)
