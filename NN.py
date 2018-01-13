@@ -16,23 +16,7 @@ layers = -1
 shape = []
 desiredAccuracy = .05
 #Learning rate
-lr = 1
-inputNeurons = X.shape[1]
-hiddenLayerNeurons = 3
-outputNeurons = 1
-
-#Weight and bias initialization
-#Hidden neuron weights
-wh = np.random.normal(loc = .5, scale = .01, size = (inputNeurons, hiddenLayerNeurons))
-
-#Hidden bias weight
-bh = np.random.normal(loc = .5, scale = .01, size = 1)
-
-#Out weight
-wout = np.random.normal(loc = .5, scale = .01, size = (hiddenLayerNeurons, outputNeurons))
-
-#out bias
-bout = np.random.normal(loc = .5, scale = .01, size = 1)
+lr = .1
 
 weights = []
 neurons = []
@@ -71,7 +55,7 @@ def initTrainingData(trainingData):
 			sys.exit(0)
 		
 		data = line.split(",")
-		if len(data) != (int)(sys.argv[3]):
+		if len(data) != (int)(sys.argv[2]):
 			print "The Training Data File Is Incorrectly Formated\n"
 			sys.exit(0)
 		
@@ -83,7 +67,7 @@ def initTrainingData(trainingData):
 #Parse Command Line Arguments
 def parseArgs():
 	global layers
-	if len(sys.argv) < 3:
+	if len(sys.argv) < 2:
 		print "Not Enough Arguments\n"
 		sys.exit(0)
 
@@ -93,20 +77,15 @@ def parseArgs():
 		print "The Given Training Data File Could Not Be Found Or Opened\n"
 		sys.exit(0)
 
-	layers = (int)(sys.argv[2])
+	layers = len(sys.argv) - 2
 	if (layers < 3):
 		print "Neural Net Must Have at least 3 layers (input, hidden, output).\n"
 		sys.exit(0)
 	
-	if (len(sys.argv) - 3) != layers:
-		print "Invalid Neural Network Dimensions"
-		sys.exit(0)
-
-	for layerSize in range(3, len(sys.argv)):
+	for layerSize in range(2, len(sys.argv)):
 		shape.append((int)(sys.argv[layerSize]))
 
 	initTrainingData(trainingData)
-
 	return True
 
 #Initialized Weight List 
@@ -171,7 +150,6 @@ def backwardPass(layerNum, layer, prevLayer, outputWeights, dOutput, lr):
 	global weights
 	global biases
 	global layers
-
 	if layerNum == layers - 1:
 		error = y - layer
 	else:
@@ -182,8 +160,6 @@ def backwardPass(layerNum, layer, prevLayer, outputWeights, dOutput, lr):
 	weights[layerNum - 1] += prevLayer.T.dot(delta) * lr
 	biases[layerNum - 1] += np.sum(delta) * lr
 	
-	#wh += prevLayer.T.dot(delta) * lr
-	#bh += np.sum(delta) * lr
 	return delta
 
 def train(X, y, lr):
@@ -206,9 +182,7 @@ def train(X, y, lr):
 
 	while True:
 		#Forward Propogation
-		#hiddenLayer = forwardPass(X, wh, bh)
-		#output = forwardPass(hiddenLayer, wout, bout)
-		
+	
 		for layer in range(0, layers - 1):
 			neurons[layer + 1] = forwardPass(neurons[layer], weights[layer], biases[layer]) 
 
@@ -219,26 +193,12 @@ def train(X, y, lr):
 		#Increase the number of elapsed epochs
 		epochElapsed += 1
 
-		#Back Propogation
-		#E = y-output
-		#slopeOutputLayer = sigmoidDerivative(output)
-		#dOutput = E * slopeOutputLayer
-		#wout += hiddenLayer.T.dot(dOutput) * lr
-		#bout += np.sum(dOutput) * lr
-
-		#hiddenLayerError = dOutput.dot(wout.T)
-		#slopeHiddenLayer = sigmoidDerivative(hiddenLayer)
-		#dHiddenLayer = hiddenLayerError * slopeHiddenLayer
-		#wh += X.T.dot(dHiddenLayer) * lr
-		#bh += np.sum(dHiddenLayer) * lr
-		
-		dOutput = None
+		delta = None
 		for layer in range(layers - 1, 0, -1):
 			if layer == layers - 1:
-				error = y - neurons[layer]
-				dOutput = backwardPass(layer, neurons[layer], neurons[layer - 1], None, dOutput, lr)
+				delta = backwardPass(layer, neurons[layer], neurons[layer - 1], None, delta, lr)
 			else:
-				dOutput = backwardPass(layer, neurons[layer], neurons[layer - 1], weights[layer], dOutput, lr)
+				delta = backwardPass(layer, neurons[layer], neurons[layer - 1], weights[layer], delta, lr)
 
 	print "epoch: ",
 	print epochElapsed

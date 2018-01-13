@@ -56,9 +56,6 @@ for i in range(epoch):
 	slopeOutputLayer = sigmoidDerivative(output)
 	slopeHiddenLayer = sigmoidDerivative(hiddenLayerActivations)
 	dOutput = E * slopeOutputLayer
-
-	print dOutput
-	print wout
 	hiddenLayerError = dOutput.dot(wout.T)
 	dHiddenLayer = hiddenLayerError * slopeHiddenLayer
 	wout += hiddenLayerActivations.T.dot(dOutput) * lr
