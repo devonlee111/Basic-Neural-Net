@@ -2,21 +2,15 @@ import numpy as np
 import sys
 
 #Global Variables
-# BinaryInput
-X = np.array([[0,0],[0,1],[1,0],[1,1]])
-	
-#Output
-#XOR Output
-y = np.array([[0],[1],[1],[0]])
 
-#NAND Output
-#y = np.array([[1],[1],[1],[0]])
+y = []	
 
 layers = -1
 shape = []
 desiredAccuracy = .05
 #Learning rate
-lr = .1
+lr = .05
+currentError = -1
 
 weights = []
 neurons = []
@@ -53,16 +47,22 @@ def initTrainingData(trainingData):
 		if not line:
 			print "The Training Data File Is Incorrectly Formated\n"
 			sys.exit(0)
-		
-		data = line.split(",")
-		if len(data) != (int)(sys.argv[2]):
+	
+		answer = line.split(":")	
+		data = answer[0].split(",")
+		answer = answer[1].split(",")
+
+		if (len(data) != (int)(sys.argv[2])) or (len(answer) != (int)(sys.argv[len(sys.argv) - 1])):
 			print "The Training Data File Is Incorrectly Formated\n"
 			sys.exit(0)
-		
+	
 		data = map(int, data)
 		temp.append(data)
+		answer = map(int, answer)
+		y.append(answer)
 
 	neurons.append(np.array(temp))
+	print y
 
 #Parse Command Line Arguments
 def parseArgs():
@@ -132,8 +132,9 @@ def sigmoidDerivative(x):
 	return x * (1 - x)
 
 #Check to see if the desired accuracy has been achieved
-def checkOutput(output, accuracy):
-	if abs(output[0] - y[0]) < accuracy and abs(output[1] - y[1]) < accuracy and abs(output[2] - y[2]) < accuracy and abs(output[3] - y[3]) < accuracy:
+def checkOutput():
+	global desiredAccuracy
+	if np.mean(np.abs(currentError)) < desiredAccuracy:
 		return 1
 
 	return 0
@@ -146,15 +147,19 @@ def forwardPass(inputLayer, inputWeights, layerBias):
 	return layer
 
 #Backpropagation Algorithm
-def backwardPass(layerNum, layer, prevLayer, outputWeights, dOutput, lr):
+def backwardPass(layerNum, layer, prevLayer, inputWeights, dOutput, lr):
 	global weights
 	global biases
 	global layers
+	global currentError
+	
 	if layerNum == layers - 1:
 		error = y - layer
+		currentError = error
 	else:
-		error = dOutput.dot(outputWeights.T)
-
+		error = dOutput.dot(inputWeights.T)
+	
+	#print layer
 	slope = sigmoidDerivative(layer)
 	delta = error * slope
 	weights[layerNum - 1] += prevLayer.T.dot(delta) * lr
@@ -162,7 +167,7 @@ def backwardPass(layerNum, layer, prevLayer, outputWeights, dOutput, lr):
 	
 	return delta
 
-def train(X, y, lr):
+def train(y, lr):
 	#Initialize variables
 	global layers
 	global bh
@@ -172,7 +177,8 @@ def train(X, y, lr):
 	global wh
 	global wout
 	global bout
-	
+	global currentError
+
 	global neurons
 	global weights
 	global biases
@@ -187,12 +193,17 @@ def train(X, y, lr):
 			neurons[layer + 1] = forwardPass(neurons[layer], weights[layer], biases[layer]) 
 
 		#Check if we reached desired accuracy
-		if checkOutput(neurons[layers - 1], desiredAccuracy) == 1 or epochElapsed >= maxEpoch:
+		if checkOutput() == 1 or epochElapsed >= maxEpoch:
 			break
 
 		#Increase the number of elapsed epochs
 		epochElapsed += 1
 
+		#Print the error every 10000 epochs
+		if epochElapsed % 10000 == 0:
+			print "Error:" + str(np.mean(np.abs(currentError)))
+
+		#Back Propagation
 		delta = None
 		for layer in range(layers - 1, 0, -1):
 			if layer == layers - 1:
@@ -205,4 +216,4 @@ def train(X, y, lr):
 	print neurons[layers - 1]
 
 initNeuralNet()
-train(X,y, lr)
+train(y, lr)
