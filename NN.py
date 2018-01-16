@@ -9,7 +9,7 @@ layers = -1
 shape = []
 desiredAccuracy = .05
 #Learning rate
-lr = .05
+lr = .01
 currentError = -1
 
 weights = []
@@ -56,9 +56,9 @@ def initTrainingData(trainingData):
 			print "The Training Data File Is Incorrectly Formated\n"
 			sys.exit(0)
 	
-		data = map(int, data)
+		data = map(float, data)
 		temp.append(data)
-		answer = map(int, answer)
+		answer = map(float, answer)
 		y.append(answer)
 
 	neurons.append(np.array(temp))
@@ -141,10 +141,10 @@ def checkOutput():
 
 #Feed Forward Algorithm
 def forwardPass(inputLayer, inputWeights, layerBias):
-	layer = np.dot(inputLayer, inputWeights)
-	layer += layerBias
-	layer = sigmoid(layer)
-	return layer
+	nextLayer = np.dot(inputLayer, inputWeights)
+	nextLayer += layerBias
+	nextLayer = sigmoid(nextLayer)
+	return nextLayer
 
 #Backpropagation Algorithm
 def backwardPass(layerNum, layer, prevLayer, inputWeights, dOutput, lr):
@@ -157,14 +157,12 @@ def backwardPass(layerNum, layer, prevLayer, inputWeights, dOutput, lr):
 		error = y - layer
 		currentError = error
 	else:
-		error = dOutput.dot(inputWeights.T)
-	
-	#print layer
+		error = dOutput.dot(inputWeights.T)	
+
 	slope = sigmoidDerivative(layer)
 	delta = error * slope
 	weights[layerNum - 1] += prevLayer.T.dot(delta) * lr
 	biases[layerNum - 1] += np.sum(delta) * lr
-	
 	return delta
 
 def train(y, lr):
@@ -183,7 +181,7 @@ def train(y, lr):
 	global weights
 	global biases
 
-	epochElapsed = 0
+	epochElapsed = 0	
 	maxEpoch = 500000
 
 	while True:
@@ -217,3 +215,4 @@ def train(y, lr):
 
 initNeuralNet()
 train(y, lr)
+#printNet()
