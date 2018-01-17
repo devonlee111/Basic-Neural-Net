@@ -131,6 +131,13 @@ def sigmoid(x):
 def sigmoidDerivative(x):
 	return x * (1 - x)
 
+#tanh Activation Function
+def tanh(x):
+	return np.tanh(x)
+
+def tanhDerivative(x):
+	return 1 - np.tanh(x) ** 2
+
 #Check to see if the desired accuracy has been achieved
 def checkOutput():
 	global desiredAccuracy
@@ -143,7 +150,7 @@ def checkOutput():
 def forwardPass(inputLayer, inputWeights, layerBias):
 	nextLayer = np.dot(inputLayer, inputWeights)
 	nextLayer += layerBias
-	nextLayer = sigmoid(nextLayer)
+	nextLayer = tanh(nextLayer)
 	return nextLayer
 
 #Backpropagation Algorithm
@@ -159,7 +166,7 @@ def backwardPass(layerNum, layer, prevLayer, inputWeights, dOutput, lr):
 	else:
 		error = dOutput.dot(inputWeights.T)	
 
-	slope = sigmoidDerivative(layer)
+	slope = tanhDerivative(layer)
 	delta = error * slope
 	weights[layerNum - 1] += prevLayer.T.dot(delta) * lr
 	biases[layerNum - 1] += np.sum(delta) * lr
@@ -191,7 +198,10 @@ def train(y, lr):
 			neurons[layer + 1] = forwardPass(neurons[layer], weights[layer], biases[layer]) 
 
 		#Check if we reached desired accuracy
-		if checkOutput() == 1 or epochElapsed >= maxEpoch:
+		#if checkOutput() == 1 or epochElapsed >= maxEpoch:
+		#	break
+
+		if epochElapsed >= maxEpoch:
 			break
 
 		#Increase the number of elapsed epochs
