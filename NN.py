@@ -20,6 +20,8 @@ lr = .01
 
 currentError = -1
 
+totalEpochs = 0
+
 # Matrix of answers to training data
 y = []
 
@@ -129,9 +131,14 @@ def parseArgs():
 # Initialized Weight List using a normal distribution
 def initWeights(shape, layers):
 	global weights
+	global activationFunction
+
+	center = 0
+	if activationFunction == 1:
+		center = .5
 
 	for layer in range(0, layers - 1):
-		layerWeights = np.random.normal(loc = .5, scale = .01, size = (shape[layer], shape[layer + 1]))
+		layerWeights = np.random.normal(loc = center, scale = .01, size = (shape[layer], shape[layer + 1]))
 		weights.append(layerWeights)
 
 # Initialized Neuron List using a normal distribution
@@ -147,9 +154,14 @@ def initNeurons(shape, layers):
 # Initialize Bias List using a normal distribution
 def initBiases(layers):
 	global biases
+	global activationFunction
+
+	center = 0
+	if activationFunction == 1:
+		center = .5
 
 	for layer in range(0, layers - 1):
-		bias = np.random.normal(loc = .5, scale = .01, size = None)
+		bias = np.random.normal(loc = center, scale = .01, size = None)
 		biases = np.append(biases, bias)
 
 #Fully Initialized Neural Net
@@ -230,14 +242,15 @@ def backwardPass(layerNum, layer, prevLayer, inputWeights, dOutput, lr):
 	return delta
 
 # Train the neural net on a data set
-def train(y, lr):
+def train(lr):
 	global layers
 	global currentError
 	global neurons
 	global weights
 	global biases
+	global totalEpochs
 
-	epochElapsed = 0	
+	epochElapsed = 0
 	maxEpoch = 500000
 
 	while True:
@@ -265,18 +278,23 @@ def train(y, lr):
 			else:
 				delta = backwardPass(layer, neurons[layer], neurons[layer - 1], weights[layer], delta, lr)
 
-	print "epoch: ",
+	totalEpochs += epochElapsed
+	print "\nNumber of epochs in current training session: ",
 	print epochElapsed
-	print neurons[layers - 1]
+	print "Total epochs over all training sessions: ",
+	print totalEpochs
+	#print neurons[layers - 1]
 
 def run():
+	global lr
 	global neurons
 	global weights
 	global biases
 	global layers
+	global desiredAccuracy
 
 	while True:
-		userCommand = raw_input("Neural Net is ready to process your input(p). You may also quit the program(q)\n")
+		userCommand = raw_input("\nNeural Net is ready to process and predict your input(p).\nNeural Net may be trained further(t).\nYou may also quit the program(q)\n")
 		if userCommand == "q":
 			print "Thank you for using my neural net program.\n"
 			sys.exit(0)
@@ -291,10 +309,15 @@ def run():
 				neurons[layer + 1] = forwardPass(neurons[layer], weights[layer], biases[layer])
 
 			print neurons[layers - 1]
+		elif userCommand == "t":
+			print "Previous desired accuracy was " + str(desiredAccuracy)
+			newAccuracy = input("Please enter a new desired accuracy value.\n")
+			desiredAccuracy = newAccuracy
+			train(lr)
 
 		else:
 			print "That is not a valid command.\n"
 
 initNeuralNet()
-train(y, lr)
+train(lr)
 run()
