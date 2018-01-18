@@ -5,6 +5,7 @@ import sys
 
 # 0 = tanh function
 # 1 = sigmoid function
+# 2 = ReLU function
 activationFunction = 0
 
 # The number of layers in the neural net
@@ -45,8 +46,6 @@ def printNet():
 	global weights
 	global biases
 	global layers
-	global wh
-	global wout
 
 	print "\nneurons"
 	for layer in range(0, layers):
@@ -113,15 +112,17 @@ def parseArgs():
 		sys.exit(0)
 
 	layers = len(sys.argv) - 3
-	if (layers < 3):
+	if layers < 3:
 		print "Neural Net Must Have at least 3 layers (input, hidden, output).\n"
 		sys.exit(0)
 
-	if (sys.argv[2] == "tanh"):
+	if sys.argv[2] == "tanh":
 		activationFunction = 0
-	elif (sys.argv[2] == "sigmoid"):
+	elif sys.argv[2] == "sigmoid":
 		activationFunction = 1
-	
+	elif sys.argv[2] == "relu" or sys.argv[2] == "ReLU":
+		activationFunction = 2
+
 	for layerSize in range(3, len(sys.argv)):
 		shape.append((int)(sys.argv[layerSize]))
 
@@ -129,12 +130,14 @@ def parseArgs():
 	return True
 
 # Initialized Weight List using a normal distribution
-def initWeights(shape, layers):
+def initWeights():
+	global shape
+	global layers
 	global weights
 	global activationFunction
 
 	center = 0
-	if activationFunction == 1:
+	if activationFunction == 1 or activationFunction == 2:
 		center = .5
 
 	for layer in range(0, layers - 1):
@@ -142,8 +145,11 @@ def initWeights(shape, layers):
 		weights.append(layerWeights)
 
 # Initialized Neuron List using a normal distribution
-def initNeurons(shape, layers):
+def initNeurons():
+	global shape
+	global layers
 	global neurons
+
 	for layer in range(1, layers):
 		neuronLayer = []
 		for neuron in range(0, shape[layer]):
@@ -152,12 +158,13 @@ def initNeurons(shape, layers):
 		neurons.append(np.array(neuronLayer))
 
 # Initialize Bias List using a normal distribution
-def initBiases(layers):
+def initBiases():
+	global layers
 	global biases
 	global activationFunction
 
 	center = 0
-	if activationFunction == 1:
+	if activationFunction == 1 or activationFunction == 2:
 		center = .5
 
 	for layer in range(0, layers - 1):
@@ -166,13 +173,10 @@ def initBiases(layers):
 
 #Fully Initialized Neural Net
 def initNeuralNet():
-	global layers
-	global shape
-	
 	parseArgs()
-	initWeights(shape, layers)
-	initNeurons(shape, layers)
-	initBiases(layers)
+	initWeights()
+	initNeurons()
+	initBiases()
 
 # Sigmoid Activation Function
 def sigmoid(x):
@@ -189,6 +193,17 @@ def tanh(x):
 # Derivative of tanh Function
 def tanhDerivative(x):
 	return 1 - np.tanh(x) ** 2
+
+def ReLU(x):
+	return np.maximum(x, 0, x)
+
+def ReLUDerivative(x):
+	return np.greater(x, 0).astype(int)
+
+def LReLUDerivative(x):
+	x[x < 0] *= .01
+	x[x > 0] = (int)(1)
+	return x
 
 #Check to see if the desired accuracy has been achieved
 def checkOutput():
@@ -251,11 +266,10 @@ def train(lr):
 	global totalEpochs
 
 	epochElapsed = 0
-	maxEpoch = 500000
+	maxEpoch = 100000
 
 	while True:
 		#Forward Propogation
-	
 		for layer in range(0, layers - 1):
 			neurons[layer + 1] = forwardPass(neurons[layer], weights[layer], biases[layer]) 
 
@@ -267,8 +281,8 @@ def train(lr):
 		epochElapsed += 1
 
 		#Print the error every 10000 epochs
-		if epochElapsed % 10000 == 0:
-			print "Error:" + str(np.mean(np.abs(currentError)))
+		if epochElapsed % 10000 == 0 or epochElapsed == 1:
+			print "Error:" + str(np.mean(np.abs(currentError)))	
 
 		#Back Propagation
 		delta = None
@@ -295,7 +309,7 @@ def run():
 
 	while True:
 		userCommand = raw_input("\nNeural Net is ready to process and predict your input(p).\nNeural Net may be trained further(t).\nYou may also quit the program(q)\n")
-		if userCommand == "q":
+		if userCommand == "q" or userCommand == "exit":
 			print "Thank you for using my neural net program.\n"
 			sys.exit(0)
 
