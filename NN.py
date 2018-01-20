@@ -57,7 +57,6 @@ def printNet():
 
 	print "\nbiases"
 	print biases
-	print "\n"
 	
 # Read the data from the given file
 # Initialize the first layer of neurons
@@ -141,7 +140,7 @@ def initWeights():
 		center = .5
 
 	for layer in range(0, layers - 1):
-		layerWeights = np.random.normal(loc = center, scale = .01, size = (shape[layer], shape[layer + 1]))
+		layerWeights = np.random.uniform(.01, .1, size = (shape[layer], shape[layer + 1]))
 		weights.append(layerWeights)
 
 # Initialized Neuron List using a normal distribution
@@ -168,7 +167,7 @@ def initBiases():
 		center = .5
 
 	for layer in range(0, layers - 1):
-		bias = np.random.normal(loc = center, scale = .01, size = None)
+		bias = np.random.uniform(.01, .1, size = None)
 		biases = np.append(biases, bias)
 
 #Fully Initialized Neural Net
@@ -200,10 +199,17 @@ def ReLU(x):
 def ReLUDerivative(x):
 	return np.greater(x, 0).astype(int)
 
+def LReLU(x):
+	x[x < 0] *= .01
+	return x
+
 def LReLUDerivative(x):
 	x[x < 0] *= .01
 	x[x > 0] = (int)(1)
 	return x
+
+def softmax(x):
+	return np.exp(x) / float(sum(np.exp(x)))
 
 #Check to see if the desired accuracy has been achieved
 def checkOutput():
@@ -224,6 +230,8 @@ def forwardPass(inputLayer, inputWeights, layerBias):
 		nextLayer = tanh(nextLayer)
 	elif activationFunction == 1:
 		nextLayer = sigmoid(nextLayer)
+	elif activationFunction == 2:
+		nextLayer = ReLU(nextLayer)
 	else:
 		nextLayer = tanh(nextLayer)
 
@@ -248,6 +256,8 @@ def backwardPass(layerNum, layer, prevLayer, inputWeights, dOutput, lr):
 		slope = tanhDerivative(layer)
 	elif activationFunction == 1:
 		slope = sigmoidDerivative(layer)
+	elif activationFunction == 2:
+		slope = ReLUDerivative(layer)
 	else:
 		slope = tanhDerivative(layer)
 
@@ -257,16 +267,20 @@ def backwardPass(layerNum, layer, prevLayer, inputWeights, dOutput, lr):
 	return delta
 
 # Train the neural net on a data set
-def train(lr):
+def train(requestedEpoch):
 	global layers
 	global currentError
 	global neurons
 	global weights
 	global biases
 	global totalEpochs
+	global lr
 
 	epochElapsed = 0
-	maxEpoch = 100000
+	maxEpoch = 10000
+
+	if requestedEpoch != None or requestedEpoch > 0:
+		maxEpoch = requestedEpoch
 
 	while True:
 		#Forward Propogation
@@ -277,7 +291,7 @@ def train(lr):
 		if checkOutput() == 1 or epochElapsed >= maxEpoch:
 			break
 
-		#Increase the number of elapsed epochs
+		#Inccrease epoch elapsed
 		epochElapsed += 1
 
 		#Print the error every 10000 epochs
@@ -306,14 +320,16 @@ def run():
 	global biases
 	global layers
 	global desiredAccuracy
+	global currentError
+	global y
 
 	while True:
-		userCommand = raw_input("\nNeural Net is ready to process and predict your input(p).\nNeural Net may be trained further(t).\nYou may also quit the program(q)\n")
-		if userCommand == "q" or userCommand == "exit":
+		userCommand = raw_input("\nNeural Net has finished its training. Here is a list of available commands.\n\"predict\"\tNeural Net is ready to process and predict your input.\n\"train\"\t\tNeural Net may be trained further.\n\"print\"\t\tPrint the values of the neural net.\n\"error\"\t\tPrint the current error.\n\"quit\"\t\tQuit the program\n--> ")
+		if userCommand == "quit" or userCommand == "exit":
 			print "Thank you for using my neural net program.\n"
 			sys.exit(0)
 
-		elif userCommand == "p":
+		elif userCommand == "predict":
 			inputs = []
 			for netInput in range(0, len(neurons[0][0])):
 				inputs.append(input("Please enter the next input datum.\n"))
@@ -323,15 +339,24 @@ def run():
 				neurons[layer + 1] = forwardPass(neurons[layer], weights[layer], biases[layer])
 
 			print neurons[layers - 1]
-		elif userCommand == "t":
+
+		elif userCommand == "train":
 			print "Previous desired accuracy was " + str(desiredAccuracy)
 			newAccuracy = input("Please enter a new desired accuracy value.\n")
 			desiredAccuracy = newAccuracy
-			train(lr)
+			requestedEpochs = input("Please enter the maximum epochs to train over.\n")
+			train(requestedEpochs)
 
+		elif userCommand == "print":
+			printNet()
+
+		elif userCommand == "error":
+			print "Expected:" + str(y)
+			print currentError
+			print "Error:" + str(np.mean(np.abs(currentError)))
 		else:
 			print "That is not a valid command.\n"
 
 initNeuralNet()
-train(lr)
+train(None)
 run()
