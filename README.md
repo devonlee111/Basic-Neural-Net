@@ -15,7 +15,7 @@ net.py:
 
 MLP.py:
 
-	python NN.py <data file> <activation function> <input layer size> <hidden layer 1 size> ... <output layer size>
+	python NN.py <data file> <activation function> [-b|-s] <input layer size> <hidden layer 1 size> ... <output layer size>
 
 # Data File Structure
 The data file should pe structured as such.
@@ -24,9 +24,17 @@ Line 1 should contain a single number representing how many data sets to train o
 
 All following lines should contain input values seperated by commas, followed by correct output values seperated by commas.
 
+Example:
+	
+	4
+	0,0:0
+	0,1:1
+	1,0:1
+	1,1:0
+
 # Sources
 Original code and educational site: https://www.analyticsvidhya.com/blog/2017/05/neural-network-from-scratch-in-python-and-r/
 
-Other educational sites:
+Other useful sights:
 
 http://iamtrask.github.io/2015/07/12/basic-python-network/
