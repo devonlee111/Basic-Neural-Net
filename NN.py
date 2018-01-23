@@ -8,6 +8,10 @@ import sys
 # 2 = ReLU function
 activationFunction = 0
 
+# 0 = batch learning
+# 1 = stochastic learning
+learningType = 0
+
 # The number of layers in the neural net
 layers = -1
 
@@ -16,12 +20,20 @@ shape = []
 
 desiredAccuracy = .05
 
+consecErrorReached = 0
+
 # Learning rate
 lr = .01
 
 currentError = -1
 
 totalEpochs = 0
+
+# The current input for training (only used in stochastic training)
+trainingInput = 0
+
+# Matrix of the all training data inputs
+x = []
 
 # Matrix of answers to training data
 y = []
@@ -65,9 +77,11 @@ def printNet():
 # Print an error if there is an error in the training data
 def initTrainingData(trainingData):
 	global neurons
+	global x
 
 	dataSize = (int)(trainingData.readline())
 	temp = []
+	temp2 = []
 	for dataPoint in range(0, dataSize):
 		line = trainingData.readline()
 		line = line.rstrip("\n")
@@ -79,17 +93,25 @@ def initTrainingData(trainingData):
 		data = answer[0].split(",")
 		answer = answer[1].split(",")
 
-		if (len(data) != (int)(sys.argv[3])) or (len(answer) != (int)(sys.argv[len(sys.argv) - 1])):
+		if (len(data) != (int)(sys.argv[4])) or (len(answer) != (int)(sys.argv[len(sys.argv) - 1])):
 			print "The Training Data File Is Incorrectly Formated\n"
 			sys.exit(0)
 	
 		data = map(float, data)
 		temp.append(data)
+		if learningType == 1 and dataPoint == 0:
+			temp2.append(data)
+
 		answer = map(float, answer)
 		y.append(answer)
 
-	neurons.append(np.array(temp))
-	print y
+	if learningType == 0:
+		neurons.append(np.array(temp))
+
+	elif learningType == 1:
+		neurons.append(np.array(temp2))
+
+	x.append(np.array(temp))
 
 # Parse Command Line Arguments
 # Initialize the shape of the neural net
@@ -98,8 +120,9 @@ def initTrainingData(trainingData):
 def parseArgs():
 	global layers
 	global activationFunction
+	global learningType
 
-	if len(sys.argv) < 3:
+	if len(sys.argv) < 4:
 		print "Not Enough Arguments\n"
 		sys.exit(0)
 
@@ -110,19 +133,35 @@ def parseArgs():
 		print "The Given Training Data File Could Not Be Found Or Opened\n"
 		sys.exit(0)
 
-	layers = len(sys.argv) - 3
+	layers = len(sys.argv) - 4
 	if layers < 3:
 		print "Neural Net Must Have at least 3 layers (input, hidden, output).\n"
 		sys.exit(0)
 
 	if sys.argv[2] == "tanh":
 		activationFunction = 0
+
 	elif sys.argv[2] == "sigmoid":
 		activationFunction = 1
+
 	elif sys.argv[2] == "relu" or sys.argv[2] == "ReLU":
 		activationFunction = 2
 
-	for layerSize in range(3, len(sys.argv)):
+	else:
+		print "That is not a known activation function."
+		sys.exit(0)
+
+	if sys.argv[3] == "-b":
+		learningType = 0
+
+	elif sys.argv[3] == "-s":
+		learningType = 1
+
+	else:
+		print "Not a valid flag"
+		sys.exit(0)
+
+	for layerSize in range(4, len(sys.argv)):
 		shape.append((int)(sys.argv[layerSize]))
 
 	initTrainingData(trainingData)
@@ -143,7 +182,7 @@ def initWeights():
 		layerWeights = np.random.uniform(.01, .1, size = (shape[layer], shape[layer + 1]))
 		weights.append(layerWeights)
 
-# Initialized Neuron List using a normal distribution
+# Initialized Neuron list to all 0
 def initNeurons():
 	global shape
 	global layers
@@ -153,7 +192,7 @@ def initNeurons():
 		neuronLayer = []
 		for neuron in range(0, shape[layer]):
 			neuronLayer.append(0)
-		
+
 		neurons.append(np.array(neuronLayer))
 
 # Initialize Bias List using a normal distribution
@@ -213,7 +252,6 @@ def softmax(x):
 
 #Check to see if the desired accuracy has been achieved
 def checkOutput():
-	global desiredAccuracy
 	if np.mean(np.abs(currentError)) < desiredAccuracy:
 		return 1
 
@@ -247,17 +285,26 @@ def backwardPass(layerNum, layer, prevLayer, inputWeights, dOutput, lr):
 	global activationFunction
 
 	if layerNum == layers - 1:
-		error = y - layer
+		if learningType == 0:
+			error = y - layer
+
+		elif learningType == 1:
+			error = y[trainingInput] - layer
+
 		currentError = error
+
 	else:
 		error = dOutput.dot(inputWeights.T)	
 
 	if activationFunction == 0:
 		slope = tanhDerivative(layer)
+
 	elif activationFunction == 1:
 		slope = sigmoidDerivative(layer)
+
 	elif activationFunction == 2:
 		slope = ReLUDerivative(layer)
+
 	else:
 		slope = tanhDerivative(layer)
 
@@ -275,9 +322,12 @@ def train(requestedEpoch):
 	global biases
 	global totalEpochs
 	global lr
+	global trainingInput
+	global consecErrorReached
 
+	consecErrorReached = 0
 	epochElapsed = 0
-	maxEpoch = 10000
+	maxEpoch = 100000
 
 	if requestedEpoch != None or requestedEpoch > 0:
 		maxEpoch = requestedEpoch
@@ -288,7 +338,19 @@ def train(requestedEpoch):
 			neurons[layer + 1] = forwardPass(neurons[layer], weights[layer], biases[layer]) 
 
 		#Check if we reached desired accuracy
-		if checkOutput() == 1 or epochElapsed >= maxEpoch:
+		if epochElapsed >= maxEpoch:
+			break
+
+		elif learningType == 0 and checkOutput() == 1:
+			break
+
+		elif learningType == 1 and checkOutput() == 1:
+			consecErrorReached += 1
+
+		elif learningType == 1 and checkOutput() == 0:
+			consecErrorReached = 0
+
+		if consecErrorReached == len(x[0]):
 			break
 
 		#Inccrease epoch elapsed
@@ -301,17 +363,25 @@ def train(requestedEpoch):
 		#Back Propagation
 		delta = None
 		for layer in range(layers - 1, 0, -1):
-			if layer == layers - 1:
-				delta = backwardPass(layer, neurons[layer], neurons[layer - 1], None, delta, lr)
-			else:
-				delta = backwardPass(layer, neurons[layer], neurons[layer - 1], weights[layer], delta, lr)
+			inputWeights = None
+			if layer != (layers - 1):
+				inputWeights = weights[layer]
+
+			delta = backwardPass(layer, neurons[layer], neurons[layer - 1], inputWeights, delta, lr)
+
+		if learningType == 1:
+			trainingInput += 1
+			if trainingInput == len(x[0]):
+				trainingInput = 0
+
+			for inputdatum in range(0, shape[0]):
+				neurons[0][0][inputdatum] = x[0][trainingInput][inputdatum]
 
 	totalEpochs += epochElapsed
 	print "\nNumber of epochs in current training session: ",
 	print epochElapsed
 	print "Total epochs over all training sessions: ",
 	print totalEpochs
-	#print neurons[layers - 1]
 
 def run():
 	global lr
