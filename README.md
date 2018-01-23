@@ -6,14 +6,14 @@ Python:
 
 net.py:	The original code used to build the most basic neural net.
 
-NN.py:	My modified version of the basic neural net.
+MLP.py:	My custom implementation of a multilayer perceptron.
 
 # Usage
 net.py:
 
 	python net.py
 
-NN.py:
+MLP.py:
 
 	python NN.py <data file> <activation function> <input layer size> <hidden layer 1 size> ... <output layer size>
 

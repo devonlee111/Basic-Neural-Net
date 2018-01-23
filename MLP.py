@@ -23,7 +23,7 @@ desiredAccuracy = .05
 consecErrorReached = 0
 
 # Learning rate
-lr = .01
+lr = .1
 
 currentError = -1
 
@@ -370,9 +370,7 @@ def train(requestedEpoch):
 			delta = backwardPass(layer, neurons[layer], neurons[layer - 1], inputWeights, delta, lr)
 
 		if learningType == 1:
-			trainingInput += 1
-			if trainingInput == len(x[0]):
-				trainingInput = 0
+			trainingInput = np.random.randint(0, len(x[0]), None)
 
 			for inputdatum in range(0, shape[0]):
 				neurons[0][0][inputdatum] = x[0][trainingInput][inputdatum]
