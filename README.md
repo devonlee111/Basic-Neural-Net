@@ -6,16 +6,18 @@ Python:
 
 net.py:	The original code used to build the most basic neural net.
 
-MLP.py:	My custom implementation of a multilayer perceptron.
+MLP.py:	My custom implementation of a multilayer perceptron using python2.7.
+
+MLP3.py: My custom implementation of a multilayer perceptron using python3.
 
 # Usage
 net.py:
 
 	python net.py
 
-MLP.py:
+MLP.py/MLP3.py:
 
-	python NN.py <data file> <activation function> [-b|-s] <input layer size> <hidden layer 1 size> ... <output layer size>
+	python(3) NN.py <data file> <activation function> [-b|-s] <input layer size> <hidden layer 1 size> ... <output layer size>
 
 # Data File Structure
 The data file should pe structured as such.
@@ -33,7 +35,7 @@ Example:
 	1,1:0
 
 # Sources
-Original code and educational site: https://www.analyticsvidhya.com/blog/2017/05/neural-network-from-scratch-in-python-and-r/
+net.py original code and educational site: https://www.analyticsvidhya.com/blog/2017/05/neural-network-from-scratch-in-python-and-r/
 
 Other useful sights:
 
