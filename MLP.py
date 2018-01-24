@@ -6,6 +6,7 @@ import sys
 # 0 = tanh function
 # 1 = sigmoid function
 # 2 = ReLU function
+# 3 = Leaky ReLU
 activationFunction = 0
 
 # 0 = batch learning
@@ -23,7 +24,7 @@ desiredAccuracy = .05
 consecErrorReached = 0
 
 # Learning rate
-lr = .1
+lr = 0.001
 
 currentError = -1
 
@@ -52,13 +53,15 @@ biases = []
 
 ##########Functions
 
+# Print information on how to use this program
+def printUsage():
+	print "USAGE:"
+	print "python MLP.py <data file> <activation function> [-b|-s] <input layer shape> <hidden layer shape> ... <output layer shape>"
+	print "current working activation functions are \"tanh\", \"sigmoid\", \"ReLU\", and \"LReLU\"."
+	print "you must specify batch or stochastic gradient descent using \"-b\" or \"-s\".\n"
+
 #Print the weights and layers of the neural net
 def printNet():
-	global neurons
-	global weights
-	global biases
-	global layers
-
 	print "\nneurons"
 	for layer in range(0, layers):
 		print neurons[layer]
@@ -121,9 +124,11 @@ def parseArgs():
 	global layers
 	global activationFunction
 	global learningType
+	global shape
 
 	if len(sys.argv) < 4:
 		print "Not Enough Arguments\n"
+		printUsage()
 		sys.exit(0)
 
 	try:
@@ -136,6 +141,7 @@ def parseArgs():
 	layers = len(sys.argv) - 4
 	if layers < 3:
 		print "Neural Net Must Have at least 3 layers (input, hidden, output).\n"
+		printUsage()
 		sys.exit(0)
 
 	if sys.argv[2] == "tanh":
@@ -147,8 +153,12 @@ def parseArgs():
 	elif sys.argv[2] == "relu" or sys.argv[2] == "ReLU":
 		activationFunction = 2
 
+	elif sys.argv[2] == "lrelu" or sys.argv[2] == "LReLU":
+		activationFunction = 3
+
 	else:
 		print "That is not a known activation function."
+		printUsage()
 		sys.exit(0)
 
 	if sys.argv[3] == "-b":
@@ -169,14 +179,7 @@ def parseArgs():
 
 # Initialized Weight List using a normal distribution
 def initWeights():
-	global shape
-	global layers
 	global weights
-	global activationFunction
-
-	center = 0
-	if activationFunction == 1 or activationFunction == 2:
-		center = .5
 
 	for layer in range(0, layers - 1):
 		layerWeights = np.random.uniform(.01, .1, size = (shape[layer], shape[layer + 1]))
@@ -184,8 +187,6 @@ def initWeights():
 
 # Initialized Neuron list to all 0
 def initNeurons():
-	global shape
-	global layers
 	global neurons
 
 	for layer in range(1, layers):
@@ -197,13 +198,7 @@ def initNeurons():
 
 # Initialize Bias List using a normal distribution
 def initBiases():
-	global layers
 	global biases
-	global activationFunction
-
-	center = 0
-	if activationFunction == 1 or activationFunction == 2:
-		center = .5
 
 	for layer in range(0, layers - 1):
 		bias = np.random.uniform(.01, .1, size = None)
@@ -233,7 +228,7 @@ def tanhDerivative(x):
 	return 1 - np.tanh(x) ** 2
 
 def ReLU(x):
-	return np.maximum(x, 0, x)
+	return np.maximum(0, x)
 
 def ReLUDerivative(x):
 	return np.greater(x, 0).astype(int)
@@ -252,6 +247,7 @@ def softmax(x):
 
 #Check to see if the desired accuracy has been achieved
 def checkOutput():
+	global desiredAccuracy
 	if np.mean(np.abs(currentError)) < desiredAccuracy:
 		return 1
 
@@ -266,10 +262,16 @@ def forwardPass(inputLayer, inputWeights, layerBias):
 	nextLayer += layerBias
 	if activationFunction == 0:
 		nextLayer = tanh(nextLayer)
+
 	elif activationFunction == 1:
 		nextLayer = sigmoid(nextLayer)
+
 	elif activationFunction == 2:
 		nextLayer = ReLU(nextLayer)
+
+	elif activationFunction == 3:
+		nextLayer = LReLU(nextLayer)
+
 	else:
 		nextLayer = tanh(nextLayer)
 
@@ -280,9 +282,7 @@ def forwardPass(inputLayer, inputWeights, layerBias):
 def backwardPass(layerNum, layer, prevLayer, inputWeights, dOutput, lr):
 	global weights
 	global biases
-	global layers
 	global currentError
-	global activationFunction
 
 	if layerNum == layers - 1:
 		if learningType == 0:
@@ -305,6 +305,9 @@ def backwardPass(layerNum, layer, prevLayer, inputWeights, dOutput, lr):
 	elif activationFunction == 2:
 		slope = ReLUDerivative(layer)
 
+	elif activationFunction == 3:
+		slope = LReLUDerivative(layer)
+
 	else:
 		slope = tanhDerivative(layer)
 
@@ -315,19 +318,14 @@ def backwardPass(layerNum, layer, prevLayer, inputWeights, dOutput, lr):
 
 # Train the neural net on a data set
 def train(requestedEpoch):
-	global layers
-	global currentError
 	global neurons
-	global weights
-	global biases
 	global totalEpochs
-	global lr
 	global trainingInput
 	global consecErrorReached
 
 	consecErrorReached = 0
 	epochElapsed = 0
-	maxEpoch = 100000
+	maxEpoch = 500000
 
 	if requestedEpoch != None or requestedEpoch > 0:
 		maxEpoch = requestedEpoch
@@ -338,7 +336,7 @@ def train(requestedEpoch):
 			neurons[layer + 1] = forwardPass(neurons[layer], weights[layer], biases[layer]) 
 
 		#Check if we reached desired accuracy
-		if epochElapsed >= maxEpoch:
+		if epochElapsed == maxEpoch:
 			break
 
 		elif learningType == 0 and checkOutput() == 1:
@@ -350,7 +348,7 @@ def train(requestedEpoch):
 		elif learningType == 1 and checkOutput() == 0:
 			consecErrorReached = 0
 
-		if consecErrorReached == len(x[0]):
+		if consecErrorReached == len(x[0]) * 4:
 			break
 
 		#Inccrease epoch elapsed
@@ -371,7 +369,6 @@ def train(requestedEpoch):
 
 		if learningType == 1:
 			trainingInput = np.random.randint(0, len(x[0]), None)
-
 			for inputdatum in range(0, shape[0]):
 				neurons[0][0][inputdatum] = x[0][trainingInput][inputdatum]
 
@@ -383,17 +380,13 @@ def train(requestedEpoch):
 
 def run():
 	global lr
-	global neurons
-	global weights
-	global biases
-	global layers
 	global desiredAccuracy
 	global currentError
-	global y
+	global neurons
 
 	while True:
 		userCommand = raw_input("\nNeural Net has finished its training. Here is a list of available commands.\n\"predict\"\tNeural Net is ready to process and predict your input.\n\"train\"\t\tNeural Net may be trained further.\n\"print\"\t\tPrint the values of the neural net.\n\"error\"\t\tPrint the current error.\n\"quit\"\t\tQuit the program\n--> ")
-		if userCommand == "quit" or userCommand == "exit":
+		if userCommand == "quit" or userCommand == "exit" or userCommand == "q":
 			print "Thank you for using my neural net program.\n"
 			sys.exit(0)
 
@@ -426,5 +419,7 @@ def run():
 			print "That is not a valid command.\n"
 
 initNeuralNet()
+#printNet()
+print activationFunction
 train(None)
 run()
