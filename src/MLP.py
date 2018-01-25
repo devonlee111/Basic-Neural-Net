@@ -1,3 +1,4 @@
+from OpenGL.GL import *
 import numpy as np
 import sys
 
@@ -116,6 +117,30 @@ def initTrainingData(trainingData):
 
 	x.append(np.array(temp))
 
+def parseFlags():
+	global learningType
+
+	numFlags = 0
+	for arg in sys.argv[:]:
+		if arg == "MLP.py":
+			continue
+
+		elif arg.startswith("-"):
+			numFlags += 1
+			if arg == "-b" :
+				learningType = 0
+
+			elif arg == "-s" :
+				learningType = 0
+
+			else:
+				print str(arg) + "is not a known argument."
+				printUsage()
+				sys.exit(0)
+
+		else:
+			return numFlags
+
 # Parse Command Line Arguments
 # Initialize the shape of the neural net
 # Print an error if the training data can't be accessed
@@ -126,49 +151,36 @@ def parseArgs():
 	global learningType
 	global shape
 
-	if len(sys.argv) < 4:
-		print "Not Enough Arguments\n"
-		printUsage()
-		sys.exit(0)
+	numFlags = parseFlags()
 
 	try:
-		trainingData = open(sys.argv[1], 'r')
+		trainingData = open(sys.argv[numFlags + 1], 'r')
 
 	except IOError:
-		print "The Given Training Data File Could Not Be Found Or Opened\n"
+		print "The Given Training Data File, " + str(sys.argv[numFlags + 1]) + ", Could Not Be Found Or Opened\n"
 		sys.exit(0)
 
-	layers = len(sys.argv) - 4
-	if layers < 3:
-		print "Neural Net Must Have at least 3 layers (input, hidden, output).\n"
-		printUsage()
-		sys.exit(0)
-
-	if sys.argv[2] == "tanh":
+	if sys.argv[numFlags + 2] == "tanh":
 		activationFunction = 0
 
-	elif sys.argv[2] == "sigmoid":
+	elif sys.argv[numFlags + 2] == "sigmoid":
 		activationFunction = 1
 
-	elif sys.argv[2] == "relu" or sys.argv[2] == "ReLU":
+	elif sys.argv[numFlags + 2] == "relu" or sys.argv[2] == "ReLU":
 		activationFunction = 2
 
-	elif sys.argv[2] == "lrelu" or sys.argv[2] == "LReLU":
+	elif sys.argv[numFlags + 2] == "lrelu" or sys.argv[2] == "LReLU":
 		activationFunction = 3
 
 	else:
-		print "That is not a known activation function."
+		print str(sys.argv[numFlags + 2]) + " is not a known activation function.\n"
 		printUsage()
 		sys.exit(0)
 
-	if sys.argv[3] == "-b":
-		learningType = 0
-
-	elif sys.argv[3] == "-s":
-		learningType = 1
-
-	else:
-		print "Not a valid flag"
+	layers = len(sys.argv) - (3 + numFlags)
+	if layers < 3:
+		print "Neural net must have at least 3 layers(input, hidden, output).\n"
+		printUsage()
 		sys.exit(0)
 
 	for layerSize in range(4, len(sys.argv)):
@@ -420,6 +432,5 @@ def run():
 
 initNeuralNet()
 #printNet()
-print activationFunction
 train(None)
 run()
