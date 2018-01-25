@@ -21,7 +21,7 @@ MLP.py:
 
 MLP3.py:
 
-	python3 MLP3.py <data file> <activation function> <[-b|-s]> <input layer size> <hidden layer 1 size> ... <output layer size>
+	python3 MLP3.py <data file> <activation function> <learning type> <learning rate> <training epochs> <input layer size> <hidden layer 1 size> ... <output layer size>
 
 # Data File Structure
 The data file should pe structured as such.
