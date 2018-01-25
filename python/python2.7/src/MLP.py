@@ -1,4 +1,4 @@
-from OpenGL.GL import *
+import Tkinter
 import numpy as np
 import sys
 

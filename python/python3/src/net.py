@@ -33,7 +33,6 @@ outputNeurons = 1
 #weight and bias initialization
 #Hidden neuron weights
 wh=np.random.uniform(size=(inputNeurons, hiddenLayerNeurons))
-print wh
 #Hidden bias weight
 bh=np.random.uniform(size=(1, hiddenLayerNeurons))
 #Out weight
@@ -54,13 +53,14 @@ for i in range(epoch):
 	#Backpropagation
 	E = y-output
 	slopeOutputLayer = sigmoidDerivative(output)
-	slopeHiddenLayer = sigmoidDerivative(hiddenLayerActivations)
 	dOutput = E * slopeOutputLayer
-	hiddenLayerError = dOutput.dot(wout.T)
-	dHiddenLayer = hiddenLayerError * slopeHiddenLayer
 	wout += hiddenLayerActivations.T.dot(dOutput) * lr
 	bout += np.sum(dOutput, axis=0, keepdims=True) * lr
+
+	hiddenLayerError = dOutput.dot(wout.T)
+	slopeHiddenLayer = sigmoidDerivative(hiddenLayerActivations)
+	dHiddenLayer = hiddenLayerError * slopeHiddenLayer
 	wh += X.T.dot(dHiddenLayer) * lr
 	bh += np.sum(dHiddenLayer) * lr
 
-print output
+print(output)

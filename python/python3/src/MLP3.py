@@ -96,7 +96,7 @@ def initTrainingData(trainingData):
 		data = answer[0].split(",")
 		answer = answer[1].split(",")
 
-		if (len(data) != (int)(sys.argv[4])) or (len(answer) != (int)(sys.argv[len(sys.argv) - 1])):
+		if (len(data) != (int)(sys.argv[6])) or (len(answer) != (int)(sys.argv[len(sys.argv) - 1])):
 			print("The Training Data File Is Incorrectly Formated\n")
 			sys.exit(0)
 	
@@ -125,23 +125,14 @@ def parseArgs():
 	global activationFunction
 	global learningType
 	global shape
-
-	if len(sys.argv) < 4:
-		print("Not Enough Arguments\n")
-		printUsage()
-		sys.exit(0)
+	global lr
+	global sessionEpochs
 
 	try:
 		trainingData = open(sys.argv[1], 'r')
 
 	except IOError:
 		print("The Given Training Data File Could Not Be Found Or Opened\n")
-		sys.exit(0)
-
-	layers = len(sys.argv) - 4
-	if layers < 3:
-		print("Neural Net Must Have at least 3 layers (input, hidden, output).\n")
-		printUsage()
 		sys.exit(0)
 
 	if sys.argv[2] == "tanh":
@@ -157,21 +148,27 @@ def parseArgs():
 		activationFunction = 3
 
 	else:
-		print("That is not a known activation function.")
+		print(str(sys.argv[2]) + " is not a known activation function.\n")
 		printUsage()
 		sys.exit(0)
 
-	if sys.argv[3] == "-b":
+	if sys.argv[3] == "batch":
 		learningType = 0
 
-	elif sys.argv[3] == "-s":
+	elif sys.argv[3] == "stochastic":
 		learningType = 1
 
-	else:
-		print("Not a valid flag")
+	lr = float(sys.argv[4])
+
+	initialEpochs = int(sys.argv[5])
+
+	layers = len(sys.argv) - 6
+	if layers < 3:
+		print("Neural net must have at least 3 layers(input, hidden, output).\n")
+		printUsage()
 		sys.exit(0)
 
-	for layerSize in range(4, len(sys.argv)):
+	for layerSize in range(6, len(sys.argv)):
 		shape.append((int)(sys.argv[layerSize]))
 
 	initTrainingData(trainingData)
