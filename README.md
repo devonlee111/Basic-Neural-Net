@@ -15,9 +15,13 @@ net.py:
 
 	python net.py
 
-MLP.py/MLP3.py:
+MLP.py:
 
-	python(3) NN.py <data file> <activation function> [-b|-s] <input layer size> <hidden layer 1 size> ... <output layer size>
+	python MLP.py <data file> <activation function> <learning type> <learning rate> <training epochs> <input layer size> <hidden layer 1 size> ... <output layer size>
+
+MLP3.py:
+
+	python3 MLP3.py <data file> <activation function> <[-b|-s]> <input layer size> <hidden layer 1 size> ... <output layer size>
 
 # Data File Structure
 The data file should pe structured as such.

@@ -29,6 +29,8 @@ lr = 0.001
 
 currentError = -1
 
+initialEpoch = 100000
+
 totalEpochs = 0
 
 # The current input for training (only used in stochastic training)
@@ -57,9 +59,9 @@ biases = []
 # Print information on how to use this program
 def printUsage():
 	print "USAGE:"
-	print "python MLP.py <data file> <activation function> [-b|-s] <input layer shape> <hidden layer shape> ... <output layer shape>"
+	print "python MLP.py <data file> <activation function> <learning type> <learning rate> <number of training epochs> <input layer shape> <hidden layer shape> ... <output layer shape>\n"
 	print "current working activation functions are \"tanh\", \"sigmoid\", \"ReLU\", and \"LReLU\"."
-	print "you must specify batch or stochastic gradient descent using \"-b\" or \"-s\".\n"
+	print "learning type choices are \"batch\" and \"stochastic\".\n"
 
 #Print the weights and layers of the neural net
 def printNet():
@@ -97,7 +99,7 @@ def initTrainingData(trainingData):
 		data = answer[0].split(",")
 		answer = answer[1].split(",")
 
-		if (len(data) != (int)(sys.argv[4])) or (len(answer) != (int)(sys.argv[len(sys.argv) - 1])):
+		if (len(data) != (int)(sys.argv[6])) or (len(answer) != (int)(sys.argv[len(sys.argv) - 1])):
 			print "The Training Data File Is Incorrectly Formated\n"
 			sys.exit(0)
 	
@@ -117,30 +119,6 @@ def initTrainingData(trainingData):
 
 	x.append(np.array(temp))
 
-def parseFlags():
-	global learningType
-
-	numFlags = 0
-	for arg in sys.argv[:]:
-		if arg == "MLP.py":
-			continue
-
-		elif arg.startswith("-"):
-			numFlags += 1
-			if arg == "-b" :
-				learningType = 0
-
-			elif arg == "-s" :
-				learningType = 0
-
-			else:
-				print str(arg) + "is not a known argument."
-				printUsage()
-				sys.exit(0)
-
-		else:
-			return numFlags
-
 # Parse Command Line Arguments
 # Initialize the shape of the neural net
 # Print an error if the training data can't be accessed
@@ -150,40 +128,50 @@ def parseArgs():
 	global activationFunction
 	global learningType
 	global shape
-
-	numFlags = parseFlags()
+	global lr
+	global sessionEpochs
 
 	try:
-		trainingData = open(sys.argv[numFlags + 1], 'r')
+		trainingData = open(sys.argv[1], 'r')
 
 	except IOError:
-		print "The Given Training Data File, " + str(sys.argv[numFlags + 1]) + ", Could Not Be Found Or Opened\n"
+		print "The Given Training Data File, " + str(sys.argv[1]) + ", Could Not Be Found Or Opened\n"
 		sys.exit(0)
 
-	if sys.argv[numFlags + 2] == "tanh":
+	if sys.argv[2] == "tanh":
 		activationFunction = 0
 
-	elif sys.argv[numFlags + 2] == "sigmoid":
+	elif sys.argv[2] == "sigmoid":
 		activationFunction = 1
 
-	elif sys.argv[numFlags + 2] == "relu" or sys.argv[2] == "ReLU":
+	elif sys.argv[2] == "relu" or sys.argv[2] == "ReLU":
 		activationFunction = 2
 
-	elif sys.argv[numFlags + 2] == "lrelu" or sys.argv[2] == "LReLU":
+	elif sys.argv[2] == "lrelu" or sys.argv[2] == "LReLU":
 		activationFunction = 3
 
 	else:
-		print str(sys.argv[numFlags + 2]) + " is not a known activation function.\n"
+		print str(sys.argv[2]) + " is not a known activation function.\n"
 		printUsage()
 		sys.exit(0)
 
-	layers = len(sys.argv) - (3 + numFlags)
+	if sys.argv[3] == "batch":
+		learningType = 0
+
+	elif sys.argv[3] == "stochastic":
+		learningType = 1
+
+	lr = float(sys.argv[4])
+
+	initialEpochs = int(sys.argv[5])
+
+	layers = len(sys.argv) - 6
 	if layers < 3:
 		print "Neural net must have at least 3 layers(input, hidden, output).\n"
 		printUsage()
 		sys.exit(0)
 
-	for layerSize in range(4, len(sys.argv)):
+	for layerSize in range(6, len(sys.argv)):
 		shape.append((int)(sys.argv[layerSize]))
 
 	initTrainingData(trainingData)
@@ -337,9 +325,11 @@ def train(requestedEpoch):
 
 	consecErrorReached = 0
 	epochElapsed = 0
-	maxEpoch = 500000
 
-	if requestedEpoch != None or requestedEpoch > 0:
+	if requestedEpoch == None:
+		maxEpoch = initialEpoch
+
+	elif requestedEpoch != None or requestedEpoch > 0:
 		maxEpoch = requestedEpoch
 
 	while True:
