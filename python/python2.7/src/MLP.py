@@ -27,10 +27,18 @@ consecErrorReached = 0
 # Learning rate
 lr = 0.001
 
+# Training momentum
+momentum = .1
+
+prevDelta = []
+
+# The error from the last epoch
 currentError = -1
 
+# The number of epochs for the initial training
 initialEpoch = 100000
 
+# The total number of epochs that have passed
 totalEpochs = 0
 
 # The current input for training (only used in stochastic training)
@@ -130,6 +138,7 @@ def parseArgs():
 	global shape
 	global lr
 	global sessionEpochs
+	global initialEpoch
 
 	try:
 		trainingData = open(sys.argv[1], 'r')
@@ -163,7 +172,7 @@ def parseArgs():
 
 	lr = float(sys.argv[4])
 
-	initialEpochs = int(sys.argv[5])
+	initialEpoch = int(sys.argv[5])
 
 	layers = len(sys.argv) - 6
 	if layers < 3:
@@ -312,7 +321,12 @@ def backwardPass(layerNum, layer, prevLayer, inputWeights, dOutput, lr):
 		slope = tanhDerivative(layer)
 
 	delta = error * slope
-	weights[layerNum - 1] += prevLayer.T.dot(delta) * lr
+	if not prevDelta or learningType == 0:
+		weights[layerNum - 1] += prevLayer.T.dot(delta) * lr
+
+	else:
+		weights[layerNum - 1] += (prevLayer.T.dot(delta) * lr) + (prevDelta[layers - layerNum - 1] * momentum)
+
 	biases[layerNum - 1] += np.sum(delta) * lr
 	return delta
 
@@ -322,6 +336,7 @@ def train(requestedEpoch):
 	global totalEpochs
 	global trainingInput
 	global consecErrorReached
+	global prevDelta
 
 	consecErrorReached = 0
 	epochElapsed = 0
@@ -362,17 +377,21 @@ def train(requestedEpoch):
 
 		#Back Propagation
 		delta = None
+		temp = []
 		for layer in range(layers - 1, 0, -1):
 			inputWeights = None
 			if layer != (layers - 1):
 				inputWeights = weights[layer]
 
 			delta = backwardPass(layer, neurons[layer], neurons[layer - 1], inputWeights, delta, lr)
+			temp.append(delta)
 
 		if learningType == 1:
 			trainingInput = np.random.randint(0, len(x[0]), None)
 			for inputdatum in range(0, shape[0]):
 				neurons[0][0][inputdatum] = x[0][trainingInput][inputdatum]
+
+		prevDelta = temp
 
 	totalEpochs += epochElapsed
 	print "\nNumber of epochs in current training session: ",
