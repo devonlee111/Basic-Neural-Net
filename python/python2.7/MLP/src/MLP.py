@@ -1,4 +1,3 @@
-import Tkinter
 import numpy as np
 import sys
 
@@ -140,11 +139,17 @@ def parseArgs():
 	global sessionEpochs
 	global initialEpoch
 
+	if len(sys.argv) == 1:
+		print "not enough args."
+		printUsage()
+		sys.exit(0)
+
 	try:
 		trainingData = open(sys.argv[1], 'r')
 
 	except IOError:
 		print "The Given Training Data File, " + str(sys.argv[1]) + ", Could Not Be Found Or Opened\n"
+		printUsage()
 		sys.exit(0)
 
 	if sys.argv[2] == "tanh":
@@ -436,10 +441,10 @@ def run():
 			print "Expected:" + str(y)
 			print currentError
 			print "Error:" + str(np.mean(np.abs(currentError)))
+
 		else:
 			print "That is not a valid command.\n"
 
 initNeuralNet()
-#printNet()
 train(None)
 run()
