@@ -1,13 +1,9 @@
 import Tkinter as tk
+import tkFileDialog
 import threading
 import MLPV
 
 class App(threading.Thread):
-
-	lr = .01
-	learningType = 0
-	maxEpochs = 10000
-	restart = False
 
 	def __init__(self):
 		self.args = []
@@ -61,50 +57,57 @@ class App(threading.Thread):
 		self.activationMenu.grid(row = 6, column = 0, sticky = tk.W)
 
 		# Create a drowdown menu to select training type.
-		self.trainingType = tk.StringVar(self.root)
-		self.trainingType.set("Batch")
-		self.trainingMenu = tk.OptionMenu(settingsFrame, self.trainingType, "Batch", "Stochastic")
+		self.learningType = tk.StringVar(self.root)
+		self.learningType.set("Batch")
+		self.trainingMenu = tk.OptionMenu(settingsFrame, self.learningType, "Batch", "Stochastic")
 		self.trainingMenu.grid(row = 7, column = 0, sticky = tk.W)	
+		
+		# Create a table and entry to input neural net shape
+		tk.Label(settingsFrame, text = "Neural Net Shape").grid(row = 8, column = 0, sticky = tk.W);
+		self.shapeInput = tk.Entry(settingsFrame)
+		self.shapeInput.grid(row = 9, column = 0, sticky = tk.W)
+
+		# Create a button that allows you to select a file for training data.
+		self.selectFileBtn = tk.Button(settingsFrame, text = "Select Training Data", command = self.selectTrainingData)
+		self.selectFileBtn.grid(row = 10, column = 0, sticky = tk.W, pady = 10)
+	
+		# Create a button to start network training.
+		self.runBtn = tk.Button(settingsFrame, text = "Train", command = self.train)
+		self.runBtn.grid(row = 11, column = 0, sticky = tk.W)
 
 		self.net = MLPV.Net()
 
 		# Start the window's mainloop.
 		self.root.mainloop()
 
-	def getLearningRate(self):
-		return self.lr
-
 	def setLearningRate(self, lr):
 		self.lrInput.delete(0, tk.END)
 		self.lrInput.insert(0, lr)
-		self.lr = lr
 
-	def getEpochs():
-		return self.epochs
-
-	def setEpochs(self, maxEpochs):
+	def setEpochs(self, epochs):
 		self.epochInput.delete(0, tk.END)
-		self.epochInput.insert(0, maxEpochs)
-		self.maxEpochs = maxEpochs
+		self.epochInput.insert(0, epochs)
 	
-	def getError(self):
-		return self.error
-
 	def setError(self, error):
 		self.errorInput.delete(0, tk.END)
 		self.errorInput.insert(0, error)
-		self.error = error
 
-	def getActivationFunction(self):
-		return self.activationFunction
+	def selectTrainingData(self):
+		self.trainingData = tkFileDialog.askopenfilename(initialdir = "/", title = "Select a file", filetypes = (("text files", "*.txt"),))
 
-	def setActivationFunction(self, activationFunction):
-		self.activationFunction = activationFunction
+	def setInputs(self):
+		self.lr = self.lrInput.get()
+		self.epochs = self.epochInput.get()
+		self.error = self.errorInput.get()
+		self.shape = self.shapeInput.get()
 
-	def getLearningType(self):
-		return self.learningType
-
-	def setLearningType(self, learningType):
-		self.learningType = learningType
+	def train(self):
+		self.setInputs()
+		if any(c.isalpha() for c in self.lr) or any(c.isalpha() for c in self.epochs) or any(c.isalpha() for c in self.error) or any(c.isalpha() for c in self.shape):
+			print "Should not cointain alpha characters."
+		else :
+			self.net.initNeuralNet(self.lr, self.epochs, self.error, self.activationFunction, self.learningType, self.trainingData, self.shape)
+			training = threading.Thread(target = self.net.trian)
+			training.start()
 
 app = App()
