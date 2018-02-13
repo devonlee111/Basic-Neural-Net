@@ -1,7 +1,8 @@
 import Tkinter as tk
 import threading
+import MLPV
 
-class Gui(threading.Thread):
+class App(threading.Thread):
 
 	lr = .01
 	learningType = 0
@@ -65,6 +66,8 @@ class Gui(threading.Thread):
 		self.trainingMenu = tk.OptionMenu(settingsFrame, self.trainingType, "Batch", "Stochastic")
 		self.trainingMenu.grid(row = 7, column = 0, sticky = tk.W)	
 
+		self.net = MLPV.Net()
+
 		# Start the window's mainloop.
 		self.root.mainloop()
 
@@ -103,4 +106,5 @@ class Gui(threading.Thread):
 
 	def setLearningType(self, learningType):
 		self.learningType = learningType
-		
+
+app = App()
