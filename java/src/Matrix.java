@@ -9,44 +9,72 @@ public class Matrix {
 		this.matrix = matrix;
 	}
 
-	public static double[][] toArray(Matrix m) {
+	public double[][] toArray() {
 		return matrix;	
 	}
 
-	public static int rows() {
+	public int rows() {
 		return matrix[0].length;
 	}
 
-	public static int cols() {
+	public int cols() {
 		return matrix.length;
 	}
 
-	public static void setValueAt(int row, int col, int value) {
+	public void setValueAt(int row, int col, int value) {
 		matrix[row][col] = value;
 	}
 
-	public static double valueAt(int row, int col) {
+	public double valueAt(int row, int col) {
 		return matrix[row][col];
 	}
 
-	public static Matrix dot(Matrix a, Matrix b) throws Exception {
-		if (a.cols() != b.rows()) {
-			throw new Exception("Matrix.dot(Matrix a, Matrix b) Exception:\nDimensions do not match. (" + a.cols() + " is not " + b.rows() + ")");
+	public Matrix add(Matrix b) throws Exception {
+		if (this.rows() != b.rows() || this.cols() != b.cols()) {
+			throw new Exception("Matrix.add(Matrix b): Dimensions do not match (" + this.rows() + ", " + this.cols() + " and (" + b.rows() + ", " + b.cols() + ")");
 		}
-	
-		int rows = a.rows();
-		int cols = b.cols();
-		double length = a.cols();
-		double[][] matrix = new double[rows][cols];	
 
-		for (int row = 0; row < rows; row++) {
-			for (int col = 0; col < cols; col++) {
-				for (int len = 0; len < length; len++) {
-					matrix[row][col] += a.valueAt(row, len) * b.valueAt(len, col);
-				}
+		double[][] matrix = new double[this.rows()][this.cols()];
+		for (int row = 0; row < this.rows(); row++) {
+			for (int col = 0; col < this.cols(); col++) {
+				matrix[row][col] = this.valueAt(row, col) + b.valueAt(row, col);
+			}
+		}
+		
+		return new Matrix(matrix);
+	}
+
+	public Matrix subtract(Matrix b) throws Exception {
+		if (this.rows() != b.rows() || this.cols() != b.cols()) {
+			throw new Exception("Matrix.add(Matrix b): Dimensions do not match (" + this.rows() + ", " + this.cols() + " and (" + b.rows() + ", " + b.cols() + ")");
+		}
+
+		double[][] matrix = new double[this.rows()][this.cols()];
+		for (int row = 0; row < this.rows(); row++) {
+			for (int col = 0; col < this.cols(); col++) {
+				matrix[row][col] = this.valueAt(row, col) + b.valueAt(row, col);
 			}
 		}
 
+		return new Matrix(matrix);
+	}
+
+	public void times(int scalar) {
+		for (int row = 0; row < this.rows(); row++) {
+			for (int col = 0; col < this.cols(); col++) {
+				matrix[row][col] *= scalar;
+			}
+		}
+	} 
+
+	public Matrix transpose() {
+		double[][] matrix = new double[this.cols()][this.rows()];
+		for (int row = 0; row < this.rows(); row++) {
+			for (int col = 0; col < this.cols(); col++) {
+				matrix[col][row] = this.matrix[row][col];
+			}
+		}
+		
 		return new Matrix(matrix);
 	}
 
@@ -57,12 +85,11 @@ public class Matrix {
 
 		int rows = this.rows();
 		int cols = b.cols();
-		int length = this.cols();
 		double[][] matrix = new double[rows][cols];
 
 		for (int row = 0; row < rows; row++) {
 			for (int col = 0; col < cols; col++) {
-				for (int len = 0; len < length; len++) {
+				for (int len = 0; len < this.cols(); len++) {
 					matrix[row][col] += this.valueAt(row, len) * b.valueAt(len, col);
 				}
 			}
