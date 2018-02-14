@@ -27,7 +27,7 @@ class App(threading.Thread):
 		settingsFrame.pack(side = tk.LEFT, fill = tk.Y)
 
 		# Create a slider to select learning rate.
-		self.lrSlider = tk.Scale(settingsFrame, label = "Learning Rate", from_ = 0, to = 1, orient = tk.HORIZONTAL, resolution = 0.001, command = self.setLearningRate)
+		self.lrSlider = tk.Scale(settingsFrame, label = "Learning Rate", from_ = 0.001, to = 1, orient = tk.HORIZONTAL, resolution = 0.001, command = self.setLearningRate)
 		self.lrSlider.grid(row = 0, column = 0, sticky = tk.W)
 
 		# Create an entry box for custom learning rate.
@@ -103,11 +103,12 @@ class App(threading.Thread):
 
 	def train(self):
 		self.setInputs()
+
 		if any(c.isalpha() for c in self.lr) or any(c.isalpha() for c in self.epochs) or any(c.isalpha() for c in self.error) or any(c.isalpha() for c in self.shape):
 			print "Should not cointain alpha characters."
 		else :
-			self.net.initNeuralNet(self.lr, self.epochs, self.error, self.activationFunction, self.learningType, self.trainingData, self.shape)
-			training = threading.Thread(target = self.net.trian)
+			self.net.initNeuralNet(self.lr, self.epochs, self.error, self.activationFunction.get(), self.learningType.get(), self.trainingData, self.shape)
+			training = threading.Thread(target = self.net.train)
 			training.start()
 
 app = App()
