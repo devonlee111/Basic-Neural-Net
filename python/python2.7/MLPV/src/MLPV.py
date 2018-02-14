@@ -10,8 +10,15 @@ class Net:
 		self.weights = []
 		self.neurons = []
 		self.biases = []
+		self.init = False
 
 	##########Functions	
+
+	def isInit(self):
+		return self.init
+
+	def getShape(self):
+		return self.shape
 
 	# Initialized Weight List using a normal distribution
 	def initWeights(self):
@@ -124,6 +131,7 @@ class Net:
 		self.initWeights()
 		self.initNeurons()
 		self.initBiases()
+		self.isInit = True
 
 	# Sigmoid Activation Function
 	def sigmoid(self, x):

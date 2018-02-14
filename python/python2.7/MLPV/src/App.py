@@ -14,13 +14,13 @@ class App(threading.Thread):
 		self.root.geometry("%dx%d+0+0" % (self.root.winfo_screenwidth(), self.root.winfo_screenheight()))
 
 		# Create the frame for the canvas.
-		netFrame = tk.Frame(self.root, highlightbackground="black", highlightcolor="black", highlightthickness=1)
+		netFrame = tk.Frame(self.root, highlightbackground = "black", highlightcolor = "black", highlightthickness=1)
 		netFrame.pack(side = tk.RIGHT, fill = tk.BOTH, expand = 1)
 
 		# Create the canvas for the net representation.
-		net = tk.Canvas(netFrame)
-		net.configure(background='pink')
-		net.pack(fill = tk.BOTH, expand = 1)
+		self.canvas = tk.Canvas(netFrame)
+		self.canvas.configure(background='pink')
+		self.canvas.pack(fill = tk.BOTH, expand = 1)
 
 		# Create the frame for the settings.
 		settingsFrame = tk.Frame(self.root)
@@ -77,6 +77,9 @@ class App(threading.Thread):
 
 		self.net = MLPV.Net()
 
+		drawThread = threading.Thread(target = self.update)
+		drawThread.start()
+
 		# Start the window's mainloop.
 		self.root.mainloop()
 
@@ -110,5 +113,33 @@ class App(threading.Thread):
 			self.net.initNeuralNet(self.lr, self.epochs, self.error, self.activationFunction.get(), self.learningType.get(), self.trainingData, self.shape)
 			training = threading.Thread(target = self.net.train)
 			training.start()
+			self.drawNet()
+
+	def drawNet(self):
+		shape = self.net.getShape()
+		layerDist = self.canvas.winfo_width() / ((len(shape)) + 1)
+		layers = []
+
+		for layer in range(len(shape)):
+			prevNodes = []
+			layerPos = (layer + 1) * layerDist
+			nodeDist = self.canvas.winfo_height() / (shape[layer] + 1)
+			nodes = []
+			
+			for node in range(shape[layer]):
+				nodePos = (node + 1) * nodeDist
+				nodes.append(nodePos)
+				self.canvas.create_oval(layerPos - 20, nodePos - 20, layerPos + 20, nodePos + 20, fill="black")
+
+				if layer > 0:
+					for prevNode in range(shape[layer - 1]):
+						line = self.canvas.create_line(layer * layerDist, layers[layer - 1][prevNode], layerPos, nodePos, fill = "blue", width = 5)
+						self.canvas.tag_lower(line)	
+
+			layers.append(nodes)
+
+	def update(self):
+		if self.net.isInit():
+			self.drawNet()
 
 app = App()
