@@ -20,6 +20,9 @@ class Net:
 	def getShape(self):
 		return self.shape
 
+	def getWeights():
+		return self.weights
+
 	# Initialized Weight List using a normal distribution
 	def initWeights(self):
 		for layer in range(0, self.layers - 1):
@@ -47,9 +50,12 @@ class Net:
 	def setEpochs(self, epochs):
 		self.epochs = (int)(epochs)
 		self.totalEpochs = 0
+		self.epochElapsed = 0
 
 	def setError(self, error):
 		self.error = (float)(error)
+		self.currentError = -1
+		self.consecErrorReached = 0
 
 	def setActivationFunction(self, activationFunction):
 		if activationFunction == "Tanh":
@@ -131,7 +137,7 @@ class Net:
 		self.initWeights()
 		self.initNeurons()
 		self.initBiases()
-		self.isInit = True
+		self.init = True
 
 	# Sigmoid Activation Function
 	def sigmoid(self, x):
@@ -238,61 +244,47 @@ class Net:
 		return delta
 
 	# Train the neural net on a data set
-	def train(self):
-		self.currentError = -1
-		consecErrorReached = 0
-		epochElapsed = 0
+	def trainingPass(self):
+		#Forward Propogation
+		for layer in range(0, self.layers - 1):
+			self.neurons[layer + 1] = self.forwardPass(self.neurons[layer], self.weights[layer], self.biases[layer]) 
 
-		while True:
-			#Forward Propogation
-			for layer in range(0, self.layers - 1):
-				self.neurons[layer + 1] = self.forwardPass(self.neurons[layer], self.weights[layer], self.biases[layer]) 
+		if self.learningType == 0 and self.checkOutput() == 1:
+			return -1
 
-			#Check if we reached desired accuracy
-			if epochElapsed == self.epochs:
-				break
+		elif self.learningType == 1 and self.checkOutput() == 1:
+			self.consecErrorReached += 1
 
-			elif self.learningType == 0 and self.checkOutput() == 1:
-				break
+		elif self.learningType == 1 and self.checkOutput() == 0:
+			self.consecErrorReached = 0
 
-			elif self.learningType == 1 and self.checkOutput() == 1:
-				consecErrorReached += 1
+		if self.consecErrorReached == len(self.x[0]) * 4:
+			return -1
 
-			elif self.learningType == 1 and self.checkOutput() == 0:
-				consecErrorReached = 0
+		#Inccrease epoch elapsed
+		self.epochElapsed += 1
 
-			if consecErrorReached == len(self.x[0]) * 4:
-				break
+		#Print the error every 10000 epochs
+		if self.epochElapsed % 10000 == 0 or self.epochElapsed == 1:
+			print "Error:" + str(np.mean(np.abs(self.currentError)))	
 
-			#Inccrease epoch elapsed
-			epochElapsed += 1
+		#Back Propagation
+		delta = None
+		temp = []
+		self.prevDelta = None
 
-			#Print the error every 10000 epochs
-			if epochElapsed % 10000 == 0 or epochElapsed == 1:
-				print "Error:" + str(np.mean(np.abs(self.currentError)))	
+		for layer in range(self.layers - 1, 0, -1):
+			inputWeights = None
+			if layer != (self.layers - 1):
+				inputWeights = self.weights[layer]
 
-			#Back Propagation
-			delta = None
-			temp = []
-			self.prevDelta = None
-			for layer in range(self.layers - 1, 0, -1):
-				inputWeights = None
-				if layer != (self.layers - 1):
-					inputWeights = self.weights[layer]
+			delta = self.backwardPass(layer, self.neurons[layer], self.neurons[layer - 1], inputWeights, delta, self.lr)
+			temp.append(delta)
 
-				delta = self.backwardPass(layer, self.neurons[layer], self.neurons[layer - 1], inputWeights, delta, self.lr)
-				temp.append(delta)
+		if self.learningType == 1:
+			self.trainingInput = np.random.randint(0, len(self.x[0]), None)
+			for inputdatum in range(0, self.shape[0]):
+				self.neurons[0][0][inputdatum] = self.x[0][self.trainingInput][inputdatum]
 
-			if self.learningType == 1:
-				self.trainingInput = np.random.randint(0, len(self.x[0]), None)
-				for inputdatum in range(0, self.shape[0]):
-					self.neurons[0][0][inputdatum] = self.x[0][self.trainingInput][inputdatum]
-
-			self.prevDelta = temp
-
-		self.totalEpochs += epochElapsed
-		print "\nNumber of epochs in current training session: ",
-		print epochElapsed
-		print "Total epochs over all training sessions: ",
-		print self.totalEpochs
-		print self.neurons[self.layers - 1]
+		self.prevDelta = temp
+		self.totalEpochs += self.epochElapsed

@@ -3,7 +3,7 @@ import tkFileDialog
 import threading
 import MLPV
 
-class App(threading.Thread):
+class App():
 
 	def __init__(self):
 		self.args = []
@@ -72,16 +72,10 @@ class App(threading.Thread):
 		self.selectFileBtn.grid(row = 10, column = 0, sticky = tk.W, pady = 10)
 	
 		# Create a button to start network training.
-		self.runBtn = tk.Button(settingsFrame, text = "Train", command = self.train)
+		self.runBtn = tk.Button(settingsFrame, text = "Train", command = self.startNet)
 		self.runBtn.grid(row = 11, column = 0, sticky = tk.W)
 
 		self.net = MLPV.Net()
-
-		drawThread = threading.Thread(target = self.update)
-		drawThread.start()
-
-		# Start the window's mainloop.
-		self.root.mainloop()
 
 	def setLearningRate(self, lr):
 		self.lrInput.delete(0, tk.END)
@@ -104,16 +98,13 @@ class App(threading.Thread):
 		self.error = self.errorInput.get()
 		self.shape = self.shapeInput.get()
 
-	def train(self):
+	def startNet(self):
 		self.setInputs()
 
 		if any(c.isalpha() for c in self.lr) or any(c.isalpha() for c in self.epochs) or any(c.isalpha() for c in self.error) or any(c.isalpha() for c in self.shape):
 			print "Should not cointain alpha characters."
 		else :
 			self.net.initNeuralNet(self.lr, self.epochs, self.error, self.activationFunction.get(), self.learningType.get(), self.trainingData, self.shape)
-			training = threading.Thread(target = self.net.train)
-			training.start()
-			self.drawNet()
 
 	def drawNet(self):
 		shape = self.net.getShape()
@@ -140,6 +131,14 @@ class App(threading.Thread):
 
 	def update(self):
 		if self.net.isInit():
+			self.net.trainingPass()
 			self.drawNet()
 
+	def run(self):
+		while(True):
+			self.update()
+			self.root.update_idletasks()
+			self.root.update()
+
 app = App()
+app.run()
