@@ -11,11 +11,29 @@ class Net:
 		self.neurons = []
 		self.biases = []
 		self.init = False
+		self.learningRate = 0
+		self.learningType = -1
+		self.activationFunction = -1
+		self.epochElapsed = 0
+		self.totalEpochs = 0
 
 	##########Functions	
 
 	def isInit(self):
 		return self.init
+
+	def clearNet(self):
+		self.y = []
+		self.x = []
+		self.weights = []
+		self.neurons = []
+		self.biases = []
+		self.init = False
+		self.learningRate = 0
+		self.learningType = -1
+		self.activationFunction = -1
+		self.epochElapsed = 0
+		self.totalEpochs = 0
 
 	def getShape(self):
 		return self.shape
@@ -52,10 +70,22 @@ class Net:
 		self.totalEpochs = 0
 		self.epochElapsed = 0
 
+	def getEpochs(self):
+		return self.epochElapsed
+
+	def shouldContinue(self):
+		if self.epochElapsed == self.epochs or self.checkOutput == 1:
+			return False
+
+		return True
+
 	def setError(self, error):
 		self.error = (float)(error)
-		self.currentError = -1
-		self.consecErrorReached = 0
+		self.currentError = np.array([[-1.0],[-1.0],[-1.0],[-1.0]])
+		np.vstack(self.currentError)
+
+	def getError(self):
+		return self.currentError
 
 	def setActivationFunction(self, activationFunction):
 		if activationFunction == "Tanh":
@@ -127,12 +157,13 @@ class Net:
 
 	#Fully Initialized Neural Net
 	def initNeuralNet(self, lr, epochs, error, activationFunction, learningType, trainingData, shape):
-		self.setLearningRate(lr);
+		self.clearNet()
+		self.setLearningRate(lr)
 		self.setEpochs(epochs)
 		self.setError(error)
 		self.setActivationFunction(activationFunction)
 		self.setLearningType(learningType)
-		self.setShape(shape);
+		self.setShape(shape)
 		self.initTrainingData(trainingData)
 		self.initWeights()
 		self.initNeurons()
@@ -209,12 +240,12 @@ class Net:
 		if layerNum == self.layers - 1:
 			if self.learningType == 0:
 				error = self.y - layer
+				self.currentError = error
 
 			elif self.learningType == 1:
 				error = self.y[self.trainingInput] - layer
-
-			self.currentError = error
-
+				self.currentError.itemset((self.trainingInput, 0), error[0][0])
+		
 		else:
 			error = dOutput.dot(inputWeights.T)	
 
@@ -252,21 +283,8 @@ class Net:
 		if self.learningType == 0 and self.checkOutput() == 1:
 			return -1
 
-		elif self.learningType == 1 and self.checkOutput() == 1:
-			self.consecErrorReached += 1
-
-		elif self.learningType == 1 and self.checkOutput() == 0:
-			self.consecErrorReached = 0
-
-		if self.consecErrorReached == len(self.x[0]) * 4:
-			return -1
-
 		#Inccrease epoch elapsed
 		self.epochElapsed += 1
-
-		#Print the error every 10000 epochs
-		if self.epochElapsed % 10000 == 0 or self.epochElapsed == 1:
-			print "Error:" + str(np.mean(np.abs(self.currentError)))	
 
 		#Back Propagation
 		delta = None

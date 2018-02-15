@@ -1,4 +1,5 @@
 import Tkinter as tk
+import numpy as np
 import tkFileDialog
 import threading
 import MLPV
@@ -70,10 +71,18 @@ class App():
 		# Create a button that allows you to select a file for training data.
 		self.selectFileBtn = tk.Button(settingsFrame, text = "Select Training Data", command = self.selectTrainingData)
 		self.selectFileBtn.grid(row = 10, column = 0, sticky = tk.W, pady = 10)
-	
+
+		self.dataFile = tk.StringVar(self.root)	
+		self.dataFile.set("No Data File Selected");
+		self.selectedData = tk.Label(settingsFrame, textvariable = self.dataFile, wraplength = 200, anchor = tk.W, justify = tk.LEFT)
+		self.selectedData.grid(row = 11, column = 0, sticky = tk.W);
+
 		# Create a button to start network training.
 		self.runBtn = tk.Button(settingsFrame, text = "Train", command = self.startNet)
-		self.runBtn.grid(row = 11, column = 0, sticky = tk.W)
+		self.runBtn.grid(row = 12, column = 0, sticky = tk.W)
+
+		self.errorText = self.canvas.create_text(1000, 50, fill = "black", text = "NET NOT STARTED")
+		self.epochText = self.canvas.create_text(50, 50, fill = "black", text = "0")
 
 		self.net = MLPV.Net()
 
@@ -91,6 +100,7 @@ class App():
 
 	def selectTrainingData(self):
 		self.trainingData = tkFileDialog.askopenfilename(initialdir = "/", title = "Select a file", filetypes = (("text files", "*.txt"),))
+		self.dataFile.set(self.trainingData)
 
 	def setInputs(self):
 		self.lr = self.lrInput.get()
@@ -106,11 +116,12 @@ class App():
 		else :
 			self.net.initNeuralNet(self.lr, self.epochs, self.error, self.activationFunction.get(), self.learningType.get(), self.trainingData, self.shape)
 
+
 	def drawNet(self):
 		shape = self.net.getShape()
 		layerDist = self.canvas.winfo_width() / ((len(shape)) + 1)
 		layers = []
-
+		
 		for layer in range(len(shape)):
 			prevNodes = []
 			layerPos = (layer + 1) * layerDist
@@ -129,10 +140,21 @@ class App():
 
 			layers.append(nodes)
 
+	def updateNetInfo(self):
+		error = self.net.getError()
+		temp = "Error: \n" + str (error)
+		self.canvas.itemconfigure(self.errorText, text = temp)
+		epochs = self.net.getEpochs()
+		temp = "Epochs: \n" + str (epochs)
+		self.canvas.itemconfigure(self.epochText, text = temp)		
+
 	def update(self):
 		if self.net.isInit():
-			self.net.trainingPass()
-			self.drawNet()
+			if self.net.shouldContinue():
+				self.net.trainingPass()
+				self.updateNetInfo()
+				if self.net.getEpochs() % 100 == 0 or self.net.getEpochs() == 1:
+					self.drawNet()
 
 	def run(self):
 		while(True):
