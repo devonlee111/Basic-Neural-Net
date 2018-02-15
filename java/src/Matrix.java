@@ -54,7 +54,7 @@ public class Matrix {
 		double[][] matrix = new double[this.rows()][this.cols()];
 		for (int row = 0; row < this.rows(); row++) {
 			for (int col = 0; col < this.cols(); col++) {
-				matrix[row][col] = this.valueAt(row, col) + b.valueAt(row, col);
+				matrix[row][col] = this.valueAt(row, col) - b.valueAt(row, col);
 			}
 		}
 
