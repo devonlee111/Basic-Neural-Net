@@ -1,5 +1,5 @@
 public class Matrix {
-	static double[][] matrix;
+	double[][] matrix;
 
 	public Matrix(int rows, int cols) {
 		matrix = new double[rows][cols];
@@ -14,14 +14,14 @@ public class Matrix {
 	}
 
 	public int rows() {
-		return matrix[0].length;
-	}
-
-	public int cols() {
 		return matrix.length;
 	}
 
-	public void setValueAt(int row, int col, int value) {
+	public int cols() {
+		return matrix[0].length;
+	}
+
+	public void setValueAt(int row, int col, double value) {
 		matrix[row][col] = value;
 	}
 
@@ -29,9 +29,10 @@ public class Matrix {
 		return matrix[row][col];
 	}
 
-	public Matrix add(Matrix b) throws Exception {
+	public Matrix add(Matrix b) {
 		if (this.rows() != b.rows() || this.cols() != b.cols()) {
-			throw new Exception("Matrix.add(Matrix b): Dimensions do not match (" + this.rows() + ", " + this.cols() + " and (" + b.rows() + ", " + b.cols() + ")");
+			System.err.println("Matrix.add(Matrix b): Dimensions do not match (" + this.rows() + ", " + this.cols() + " and (" + b.rows() + ", " + b.cols() + ")");
+			System.exit(1);
 		}
 
 		double[][] matrix = new double[this.rows()][this.cols()];
@@ -44,9 +45,10 @@ public class Matrix {
 		return new Matrix(matrix);
 	}
 
-	public Matrix subtract(Matrix b) throws Exception {
+	public Matrix subtract(Matrix b) {
 		if (this.rows() != b.rows() || this.cols() != b.cols()) {
-			throw new Exception("Matrix.add(Matrix b): Dimensions do not match (" + this.rows() + ", " + this.cols() + " and (" + b.rows() + ", " + b.cols() + ")");
+			System.err.println("Matrix.add(Matrix b): Dimensions do not match (" + this.rows() + ", " + this.cols() + " and (" + b.rows() + ", " + b.cols() + ")");
+			System.exit(1);
 		}
 
 		double[][] matrix = new double[this.rows()][this.cols()];
@@ -71,16 +73,17 @@ public class Matrix {
 		double[][] matrix = new double[this.cols()][this.rows()];
 		for (int row = 0; row < this.rows(); row++) {
 			for (int col = 0; col < this.cols(); col++) {
-				matrix[col][row] = this.matrix[row][col];
+				matrix[col][row] = (this.matrix[row][col]);
 			}
 		}
 		
 		return new Matrix(matrix);
 	}
 
-	public Matrix dot(Matrix b) throws Exception {
+	public Matrix dot(Matrix b) {
 		if (this.cols() != b.rows()) {
-			throw new Exception("Matrix.dot(Matrix b) Exception:\nDimensions do not match. (" + this.cols() + " is not " + this.rows() + ")");
+			System.err.println("Matrix.dot(Matrix b) Exception:\nDimensions do not match. (" + this.cols() + " is not " + this.rows() + ")");
+			System.exit(1);
 		}
 
 		int rows = this.rows();
