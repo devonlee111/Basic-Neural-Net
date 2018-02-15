@@ -77,12 +77,13 @@ class App():
 		self.selectedData = tk.Label(settingsFrame, textvariable = self.dataFile, wraplength = 200, anchor = tk.W, justify = tk.LEFT)
 		self.selectedData.grid(row = 11, column = 0, sticky = tk.W);
 
+		# Create a button to initialize network
+		self.initBtn = tk.Button(settingsFrame, text = "Initialize", command = self.initNet)
+		self.initBtn.grid(row = 12, column = 0, sticky = tk.W)
+
 		# Create a button to start network training.
 		self.runBtn = tk.Button(settingsFrame, text = "Train", command = self.startNet)
-		self.runBtn.grid(row = 12, column = 0, sticky = tk.W)
-
-		self.errorText = self.canvas.create_text(1000, 50, fill = "black", text = "NET NOT STARTED")
-		self.epochText = self.canvas.create_text(50, 50, fill = "black", text = "0")
+		self.runBtn.grid(row = 13, column = 0, sticky = tk.W)
 
 		self.net = MLPV.Net()
 
@@ -109,15 +110,20 @@ class App():
 		self.shape = self.shapeInput.get()
 
 	def startNet(self):
+		self.net.setInit(True)
+
+	def initNet(self):
 		self.setInputs()
 
 		if any(c.isalpha() for c in self.lr) or any(c.isalpha() for c in self.epochs) or any(c.isalpha() for c in self.error) or any(c.isalpha() for c in self.shape):
 			print "Should not cointain alpha characters."
 		else :
-			self.net.initNeuralNet(self.lr, self.epochs, self.error, self.activationFunction.get(), self.learningType.get(), self.trainingData, self.shape)
+			self.net.initNeuralNet(self.lr, self.epochs, self.error, self.activationFunction.get(), self.learningType.get(), self.trainingData, self.shape)	
 
+		self.drawNet()
 
 	def drawNet(self):
+		self.canvas.delete("all");
 		shape = self.net.getShape()
 		layerDist = self.canvas.winfo_width() / ((len(shape)) + 1)
 		layers = []
@@ -140,21 +146,15 @@ class App():
 
 			layers.append(nodes)
 
-	def updateNetInfo(self):
-		error = self.net.getError()
-		temp = "Error: \n" + str (error)
-		self.canvas.itemconfigure(self.errorText, text = temp)
-		epochs = self.net.getEpochs()
-		temp = "Epochs: \n" + str (epochs)
-		self.canvas.itemconfigure(self.epochText, text = temp)		
+		self.canvas.create_text(1000, 50, fill = "black", text = "Error: \n" + str(self.net.getError()))
+		self.canvas.create_text(50, 50, fill = "black", text = "Epochs: \n" + str(self.net.getEpochs()))
 
 	def update(self):
 		if self.net.isInit():
 			if self.net.shouldContinue():
 				self.net.trainingPass()
-				self.updateNetInfo()
-				if self.net.getEpochs() % 100 == 0 or self.net.getEpochs() == 1:
-					self.drawNet()
+				#if self.net.getEpochs() % 100 == 0 or self.net.getEpochs() == 1:
+				self.drawNet()
 
 	def run(self):
 		while(True):

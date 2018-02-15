@@ -22,6 +22,9 @@ class Net:
 	def isInit(self):
 		return self.init
 
+	def setInit(self, init):
+		self.init = init
+
 	def clearNet(self):
 		self.y = []
 		self.x = []
@@ -168,7 +171,6 @@ class Net:
 		self.initWeights()
 		self.initNeurons()
 		self.initBiases()
-		self.init = True
 
 	# Sigmoid Activation Function
 	def sigmoid(self, x):
