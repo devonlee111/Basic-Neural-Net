@@ -16,6 +16,7 @@ class Net:
 		self.activationFunction = -1
 		self.epochElapsed = 0
 		self.totalEpochs = 0
+		self.epochs = 0
 
 	##########Functions	
 
@@ -80,7 +81,7 @@ class Net:
 		return self.epochElapsed
 
 	def shouldContinue(self):
-		if self.epochElapsed >= self.epochs or self.checkOutput == 1:
+		if self.epochElapsed >= self.epochs or self.checkOutput() == 1:
 			return False
 
 		return True

@@ -1,7 +1,6 @@
 import Tkinter as tk
 import numpy as np
 import tkFileDialog
-import threading
 import MLPV
 
 class App():
@@ -175,15 +174,16 @@ class App():
 		self.canvas.create_text(self.canvas.winfo_width() - 100, 50, fill = "black", text = "Error: \n" + str(self.net.getError()))
 		self.canvas.create_text(50, 50, fill = "black", text = "Epochs: \n" + str(self.net.getEpochs()))
 
-	def update(self):	
+	def update(self):
+		if self.net.shouldContinue() == False:
+			self.running = False
+		
 		self.status.set("Running: " + str(self.running));
-		if self.net.isInit():
+		
+		if self.net.isInit():		
 			if self.net.shouldContinue() and self.running:
 				self.net.trainingPass()
 				self.drawNet()
-
-			elif self.net.shouldContinue() == False:
-				self.status = False;
 
 	def run(self):
 		while(True):
