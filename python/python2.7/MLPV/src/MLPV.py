@@ -73,11 +73,14 @@ class Net:
 		self.totalEpochs = 0
 		self.epochElapsed = 0
 
+	def setMaxEpochs(self, epochs):
+		self.epochs = (int)(epochs)
+
 	def getEpochs(self):
 		return self.epochElapsed
 
 	def shouldContinue(self):
-		if self.epochElapsed == self.epochs or self.checkOutput == 1:
+		if self.epochElapsed >= self.epochs or self.checkOutput == 1:
 			return False
 
 		return True
@@ -158,7 +161,7 @@ class Net:
 		self.x.append(np.array(temp))
 		self.trainingInput = 0;
 
-	#Fully Initialized Neural Net
+	# Fully Initialized Neural Net
 	def initNeuralNet(self, lr, epochs, error, activationFunction, learningType, trainingData, shape):
 		self.clearNet()
 		self.setLearningRate(lr)
@@ -171,6 +174,12 @@ class Net:
 		self.initWeights()
 		self.initNeurons()
 		self.initBiases()
+
+	# Change the configuration of the Neural Net
+	def editNet(self, lr, epochs, error):
+		self.setLearningRate(lr)
+		self.setMaxEpochs(epochs)
+		self.setError(error)
 
 	# Sigmoid Activation Function
 	def sigmoid(self, x):

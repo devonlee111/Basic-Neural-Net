@@ -8,6 +8,7 @@ class App():
 
 	def __init__(self):
 		self.args = []
+		self.running = False
 
 		# Create the root window.
 		self.root = tk.Tk()
@@ -81,9 +82,23 @@ class App():
 		self.initBtn = tk.Button(settingsFrame, text = "Initialize", command = self.initNet)
 		self.initBtn.grid(row = 12, column = 0, sticky = tk.W)
 
+		# Create a button to edit the nerual net parameters
+		self.editBtn = tk.Button(settingsFrame, text = "Re-initialize Parameters", command = self.editNet)
+		self.editBtn.grid(row = 13, column = 0, sticky = tk.W)
+
 		# Create a button to start network training.
 		self.runBtn = tk.Button(settingsFrame, text = "Train", command = self.startNet)
-		self.runBtn.grid(row = 13, column = 0, sticky = tk.W)
+		self.runBtn.grid(row = 14, column = 0, sticky = tk.W)
+
+		# Create a button to stop network training.
+		self.stopBtn = tk.Button(settingsFrame, text = "Stop", command = self.stopNet)
+		self.stopBtn.grid(row = 15, column = 0, sticky = tk.W)
+
+		# Create a label telling the status of the net.
+		self.status = tk.StringVar(self.root)
+		self.status.set("Running: " + str(self.running));
+		self.currentStatus = tk.Label(settingsFrame, textvariable = self.status, wraplength = 200, anchor = tk.W, justify = tk.LEFT)
+		self.currentStatus.grid(row = 16, column = 0, sticky = tk.W)
 
 		self.net = MLPV.Net()
 
@@ -111,16 +126,27 @@ class App():
 
 	def startNet(self):
 		self.net.setInit(True)
+		self.running = True
+
+	def stopNet(self):
+		self.running = False
 
 	def initNet(self):
 		self.setInputs()
 
 		if any(c.isalpha() for c in self.lr) or any(c.isalpha() for c in self.epochs) or any(c.isalpha() for c in self.error) or any(c.isalpha() for c in self.shape):
 			print "Should not cointain alpha characters."
+
 		else :
 			self.net.initNeuralNet(self.lr, self.epochs, self.error, self.activationFunction.get(), self.learningType.get(), self.trainingData, self.shape)	
 
 		self.drawNet()
+
+	def editNet(self):
+		self.lr = self.lrInput.get()
+		self.epochs = self.epochInput.get()
+		self.error = self.errorInput.get()
+		self.net.editNet(self.lr, self.epochs, self.error)
 
 	def drawNet(self):
 		self.canvas.delete("all");
@@ -146,15 +172,18 @@ class App():
 
 			layers.append(nodes)
 
-		self.canvas.create_text(1000, 50, fill = "black", text = "Error: \n" + str(self.net.getError()))
+		self.canvas.create_text(self.canvas.winfo_width() - 100, 50, fill = "black", text = "Error: \n" + str(self.net.getError()))
 		self.canvas.create_text(50, 50, fill = "black", text = "Epochs: \n" + str(self.net.getEpochs()))
 
-	def update(self):
+	def update(self):	
+		self.status.set("Running: " + str(self.running));
 		if self.net.isInit():
-			if self.net.shouldContinue():
+			if self.net.shouldContinue() and self.running:
 				self.net.trainingPass()
-				#if self.net.getEpochs() % 100 == 0 or self.net.getEpochs() == 1:
 				self.drawNet()
+
+			elif self.net.shouldContinue() == False:
+				self.status = False;
 
 	def run(self):
 		while(True):
