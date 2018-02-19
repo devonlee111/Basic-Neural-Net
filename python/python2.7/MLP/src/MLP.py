@@ -51,6 +51,8 @@ class Net:
 		# Matrix of answers to training data
 		self.y = []
 
+		self.labels = dict()
+
 		# The matrix of weights
 		# Each entry is connection between layers
 		self.weights = []
@@ -76,7 +78,7 @@ class Net:
 	def printNet(self):
 		print "\nneurons"
 		for layer in range(0, self.layers):
-			print neurons[layer]
+			print self.neurons[layer]
 
 		print "\nweights"
 		for layer in range(0, self.layers - 1):
@@ -118,6 +120,7 @@ class Net:
 
 			answer = map(float, answer)
 			self.y.append(answer)
+			self.labels[tuple(data)] = answer
 
 		if self.learningType == 0:
 			self.neurons.append(np.array(temp))
@@ -303,6 +306,8 @@ class Net:
 
 			self.currentError = error
 
+			print self.labels.get(tuple(self.x[0][self.trainingInput]))
+
 		else:
 			error = dOutput.dot(inputWeights.T)	
 
@@ -382,7 +387,7 @@ class Net:
 				temp.append(delta)
 
 			if self.learningType == 1:
-				trainingInput = np.random.randint(0, len(self.x[0]), None)
+				self.trainingInput = np.random.randint(0, len(self.x[0]), None)
 				for inputdatum in range(0, self.shape[0]):
 					self.neurons[0][0][inputdatum] = self.x[0][self.trainingInput][inputdatum]
 
@@ -406,11 +411,11 @@ class Net:
 				for netInput in range(0, len(self.neurons[0][0])):
 					inputs.append(input("Please enter the next input datum.\n"))
 
-				self.neurons[1] = self.forwardPass(inputs, weights[0], biases[0])
+				self.neurons[1] = self.forwardPass(inputs, self.weights[0], self.biases[0])
 				for layer in range(1, self.layers - 1):
-					self.neurons[layer + 1] = self.forwardPass(neurons[layer], weights[layer], biases[layer])
+					self.neurons[layer + 1] = self.forwardPass(self.neurons[layer], self.weights[layer], self.biases[layer])
 
-				print self.neurons[layers - 1]
+				print self.neurons[self.layers - 1]
 
 			elif userCommand == "train":
 				print "Previous desired accuracy was " + str(self.desiredAccuracy)
@@ -423,7 +428,7 @@ class Net:
 				self.printNet()
 
 			elif userCommand == "error":
-				print "Expected:" + str(y)
+				print "Expected:" + str(self.y)
 				print self.currentError
 				print "Error:" + str(np.mean(np.abs(self.currentError)))
 
