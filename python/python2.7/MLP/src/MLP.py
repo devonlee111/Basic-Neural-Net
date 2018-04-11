@@ -24,7 +24,7 @@ class Net:
 		self.shape = []			# The number of neurons in each layer
 		self.lr = 0.001			# The learning rate of the neural network
 		self.desiredAccuracy = .05	# The threshhold accuracy to stop training
-		self.momentum = .1		# The momentum value to escape local minima
+		self.momentum = .01		# The momentum value to escape local minima
 		self.prevDelta = []		# The previous layer's delta during back propogation
 		self.currentError = -1		# The error from the last epoch
 		self.totalEpochs = 0		# The total number of epochs to train over per session
