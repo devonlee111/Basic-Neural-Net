@@ -432,7 +432,15 @@ class Net:
 				self.neurons[1] = self.forwardPass(inputs, self.weights[0], self.biases[0], False)
 				for layer in range(1, self.layers - 1):
 					self.neurons[layer + 1] = self.forwardPass(self.neurons[layer], self.weights[layer], self.biases[layer], layer == self.layers - 2)
-				print self.neurons[self.layers - 1]
+
+				maxProb = -1
+				hotIndex = -1
+				for hot in range(0, len(self.neurons[self.layers - 1])):
+					if self.neurons[self.layers - 1][hot] > maxProb:
+						maxProb = self.neurons[self.layers - 1][hot]
+						hotIndex = hot
+
+				print "\nPREDICTION: " + self.labels.get(hotIndex)
 
 			elif userCommand == "train":
 				print "Previous desired accuracy was " + str(self.desiredAccuracy)
