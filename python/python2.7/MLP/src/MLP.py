@@ -261,11 +261,13 @@ class Net:
 		return x
 
 	# Softmax Activation Function
-	def softmax(self, x):
+	def softmax(self, x):	
 		norm = x - np.max(x)
 		numerator = np.exp(norm) / np.sum(np.exp(norm))
-		denominator = np.reshape(np.sum(numerator, axis=1), (-1, 1))
-		return numerator / denominator
+		if numerator.ndim > 1:
+			denominator = np.reshape(np.sum(numerator, axis=1), (-1, 1))
+			return numerator / denominator
+		return numerator
 
 	def crossEntropy(self, x, y):
 		m = y.shape[0]
@@ -386,7 +388,7 @@ class Net:
 
 			#Print the error every 10000 epochs
 			if epochElapsed % 10000 == 0 or epochElapsed == 1:
-				print "Error:" + str(np.mean(np.abs(self.currentError)))	
+				print "Current Session Epoch: " + str(self.totalEpochs + epochElapsed) + " | Error:" + str(np.mean(np.abs(self.currentError)))	
 
 			#Back Propagation
 			delta = None
@@ -403,6 +405,9 @@ class Net:
 				self.trainingInput = np.random.randint(0, len(self.x[0]), None)
 				for inputdatum in range(0, self.shape[0]):
 					self.neurons[0][0][inputdatum] = self.x[0][self.trainingInput][inputdatum]
+
+			if self.checkOutput():
+				break
 
 			self.prevDelta = temp
 
@@ -424,10 +429,9 @@ class Net:
 				for netInput in range(0, len(self.neurons[0][0])):
 					inputs.append(input("Please enter the next input datum.\n"))
 
-				self.neurons[1] = self.forwardPass(inputs, self.weights[0], self.biases[0])
+				self.neurons[1] = self.forwardPass(inputs, self.weights[0], self.biases[0], False)
 				for layer in range(1, self.layers - 1):
-					self.neurons[layer + 1] = self.forwardPass(self.neurons[layer], self.weights[layer], self.biases[layer])
-
+					self.neurons[layer + 1] = self.forwardPass(self.neurons[layer], self.weights[layer], self.biases[layer], layer == self.layers - 2)
 				print self.neurons[self.layers - 1]
 
 			elif userCommand == "train":
@@ -435,7 +439,7 @@ class Net:
 				newAccuracy = input("Please enter a new desired accuracy value.\n")
 				self.desiredAccuracy = newAccuracy
 				requestedEpochs = input("Please enter the maximum epochs to train over.\n")
-				train(requestedEpochs)
+				self.train(requestedEpochs)
 
 			elif userCommand == "print":
 				self.printNet()
