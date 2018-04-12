@@ -5,27 +5,60 @@ class Net:
 
 	def __init__(self):
 		self.args = []
-		self.y = []
-		self.x = []
-		self.weights = []
-		self.neurons = []
-		self.biases = []
 		self.init = False
-		self.learningRate = 0
-		self.learningType = -1
-		self.activationFunction = -1
-		self.epochElapsed = 0
-		self.totalEpochs = 0
-		self.epochs = 0
 
-	##########Functions	
+		# The activation function to use for each layer
+		# 0 = tanh function
+		# 1 = sigmoid function
+		# 2 = ReLU function
+		# 3 = Leaky ReLU function
+		self.activationFunction = 0
 
+		# How we should train the neural net on the data
+		# 0 = batch learning
+		# 1 = stochastic learning
+		self.learningType = 0
+
+		self.x = []			# Matrix of all the training data inputs
+		self.y = []			# one hot matrix of answers to the training data
+		self.labels = dict()		# Dictionary linking index of one hot value to answer
+		self.layers = 0			# The number of layers in the neural net
+		self.shape = []			# The number of neurons in each layer
+		self.lr = .001			# The learning rate of the neural net
+		self.desiredAccuracy = 0.5	# The threshold accuracy to stop training
+		self.momentum = .01		# The momentum value to escape local minima
+		self.prevDelta = []		# The previous layer's delta during back propogation
+		self.currentError = -1		# The error from the last epoch
+		self.epochElapsed = 0		# The total number of epochs trained over
+		self.epochs = 0			# The max number of epochs to train over
+
+		self.trainingInput = 0		# The current input values for training (only used in stochastic training)
+
+		# The matrix of weights
+		# Each entry is a connection between layers
+		self.weights = []
+
+		# The matrix of neurons
+		# Each Entry is a layer of neurons
+		self.neurons = []
+
+		# The matrix of biases
+		# Each entry is a bias for a layer
+		self.biases = []
+
+	#----------------------------------------#
+	######## Initialization Functions ########
+	#----------------------------------------#
+
+	# Check if the neural net has been initialized yet
 	def isInit(self):
 		return self.init
 
+	# Set neural net initilized variable
 	def setInit(self, init):
 		self.init = init
 
+	# Completely wipe information from the neural net
 	def clearNet(self):
 		self.y = []
 		self.x = []
@@ -37,21 +70,84 @@ class Net:
 		self.learningType = -1
 		self.activationFunction = -1
 		self.epochElapsed = 0
-		self.totalEpochs = 0
+		self.epochs = 0
 
+	# Returns the shape of the neural net
 	def getShape(self):
 		return self.shape
 
+	# Returns the neural net's weight matrix
 	def getWeights():
 		return self.weights
 
-	# Initialized Weight List using a normal distribution
+	# Read the data from the given file
+	# Initialize the first layer of neurons
+	# Initialize the y matrix with training data answers
+	# Print an error if the matrix size doesnt match with the data
+	# Print an error if there is an error in the training data
+	def initTrainingData(self, trainingData):
+		dataSize = (int)(trainingData.readline())
+		temp = []
+		temp2 = []
+		tempy = []
+		distinctLabels = 0
+
+		for dataPoint in range(0, dataSize):
+			line = trainingData.readline()
+			line = line.rstrip("\n")
+
+			if not line:
+				print "The Training Data File Is Incorrectly Formated\n"
+				sys.exit(0)
+	
+			trainingInfo = line.split(":")	
+			data = trainingInfo[0].split(",")
+			answer = trainingInfo[1]
+
+			if len(data) != (int)(self.shape[0]):
+				print "The Training Data File Is Incorrectly Formated\n"
+				sys.exit(0)
+
+			if answer not in tempy:
+				self.labels[distinctLabels] = answer
+				distinctLabels += 1
+
+			data = map(float, data)
+			temp.append(data)
+
+			if self.learningType == 1 and dataPoint == 0:
+				temp2.append(data)
+			
+			tempy.append(answer)
+
+		if self.learningType == 0:
+			self.neurons.append(np.array(temp))
+
+		elif self.learningType == 1:
+			self.neurons.append(np.array(temp2))
+
+		self.x.append(np.array(temp))
+		self.yOneHot(distinctLabels, tempy)
+
+	def yOneHot(self, numLabels, y):
+		for index in range(0, len(y)):
+			answer = np.zeros(numLabels)
+			temp = 0
+			for label in self.labels.values():
+				if label == y[index]:
+					answer[temp] = 1
+					self.y.append(np.array(answer))
+					break
+
+				temp += 1
+
+	# Initialize weight matrix using a uniform distribution
 	def initWeights(self):
 		for layer in range(0, self.layers - 1):
 			layerWeights = np.random.uniform(.01, .1, size = (self.shape[layer], self.shape[layer + 1]))
 			self.weights.append(layerWeights)
 
-	# Initialized Neuron list to all 0
+	# Initialize neuron matrix to all 0
 	def initNeurons(self):
 		for layer in range(1, self.layers):
 			neuronLayer = []
@@ -71,7 +167,6 @@ class Net:
 
 	def setEpochs(self, epochs):
 		self.epochs = (int)(epochs)
-		self.totalEpochs = 0
 		self.epochElapsed = 0
 
 	def setMaxEpochs(self, epochs):
@@ -119,49 +214,7 @@ class Net:
 		self.shape = map(int, self.shape)
 		self.layers = len(self.shape)
 
-	# Read the data from the given file
-	# Initialize the first layer of neurons
-	# Initialize the y matrix with training data answers
-	# Print an error if the matrix size doesnt match with the data
-	# Print an error if there is an error in the training data
-	def initTrainingData(self, trainingDataPath):
-		trainingData = open(trainingDataPath, 'r')
-		dataSize = (int)(trainingData.readline())
-		temp = []
-		temp2 = []
-
-		for dataPoint in range(0, dataSize):
-			line = trainingData.readline()
-			line = line.rstrip("\n")
-			if not line:
-				print "The Training Data File Is Incorrectly Formated\n"
-				sys.exit(0)
 	
-			answer = line.split(":")	
-			data = answer[0].split(",")
-			answer = answer[1].split(",")
-
-			if len(data) != (int)(self.shape[0]) or (len(answer) != (int)(self.shape[self.layers - 1])):
-				print "The Training Data File Is Incorrectly Formated\n"
-				sys.exit(0)
-	
-			data = map(float, data)
-			temp.append(data)
-			if self.learningType == 1 and dataPoint == 0:
-				temp2.append(data)
-
-			answer = map(float, answer)
-			self.y.append(answer)
-
-		if self.learningType == 0:
-			self.neurons.append(np.array(temp))
-
-		elif self.learningType == 1:
-			self.neurons.append(np.array(temp2))
-
-		self.x.append(np.array(temp))
-		self.trainingInput = 0;
-
 	# Fully Initialized Neural Net
 	def initNeuralNet(self, lr, epochs, error, activationFunction, learningType, trainingData, shape):
 		self.clearNet()
@@ -171,7 +224,7 @@ class Net:
 		self.setActivationFunction(activationFunction)
 		self.setLearningType(learningType)
 		self.setShape(shape)
-		self.initTrainingData(trainingData)
+		self.initTrainingData(open(trainingData))
 		self.initWeights()
 		self.initNeurons()
 		self.initBiases()
@@ -214,6 +267,12 @@ class Net:
 		return x
 
 	def softmax(self, x):
+		norm = x - np.max(x)
+		numerator = np.exp(norm) / np.sum(np.exp(norm))
+		if numerator.ndim > 1:
+			denominator = np.reshape(np.sum(numerator, axis=1), (-1, 1))
+			return numerator / denominator
+
 		return np.exp(x) / float(sum(np.exp(x)))
 
 	#Check to see if the desired accuracy has been achieved
@@ -225,10 +284,13 @@ class Net:
 
 	# Feed Forward Algorithm
 	# Calculates the value(s) of the next layer
-	def forwardPass(self, inputLayer, inputWeights, layerBias):
+	def forwardPass(self, inputLayer, inputWeights, layerBias, classify):
 		nextLayer = np.dot(inputLayer, inputWeights)
 		nextLayer += layerBias
-		if self.activationFunction == 0:
+		if classify:
+			nextLayer = self.softmax(nextLayer)
+
+		elif self.activationFunction == 0:
 			nextLayer = self.tanh(nextLayer)
 
 		elif self.activationFunction == 1:
@@ -257,31 +319,34 @@ class Net:
 			elif self.learningType == 1:
 				error = self.y[self.trainingInput] - layer
 				self.currentError.itemset((self.trainingInput, 0), error[0][0])
-		
+
+			delta = error
+
 		else:
 			error = dOutput.dot(inputWeights.T)	
 
-		if self.activationFunction == 0:
-			slope = self.tanhDerivative(layer)
+			if self.activationFunction == 0:
+				slope = self.tanhDerivative(layer)
 
-		elif self.activationFunction == 1:
-			slope = self.sigmoidDerivative(layer)
+			elif self.activationFunction == 1:
+				slope = self.sigmoidDerivative(layer)
 
-		elif self.activationFunction == 2:
-			slope = self.ReLUDerivative(layer)
+			elif self.activationFunction == 2:
+				slope = self.ReLUDerivative(layer)
 
-		elif self.activationFunction == 3:
-			slope = self.LReLUDerivative(layer)
+			elif self.activationFunction == 3:
+				slope = self.LReLUDerivative(layer)
 
-		else:
-			slope = self.tanhDerivative(layer)
+			else:
+				slope = self.tanhDerivative(layer)
 
-		delta = error * slope
-		if not self.prevDelta or learningType == 0:
+			delta = error * slope
+
+		if not self.prevDelta or self.learningType == 0:
 			self.weights[layerNum - 1] += prevLayer.T.dot(delta) * lr
 
 		else:
-			self.weights[layerNum - 1] += (prevLayer.T.dot(delta) * lr) + (prevDelta[self.layers - layerNum - 1] * momentum)
+			self.weights[layerNum - 1] += (prevLayer.T.dot(delta) * lr) + (self.prevDelta[self.layers - layerNum - 1] * self.momentum)
 
 		self.biases[layerNum - 1] += np.sum(delta) * lr
 		return delta
@@ -290,9 +355,9 @@ class Net:
 	def trainingPass(self):
 		#Forward Propogation
 		for layer in range(0, self.layers - 1):
-			self.neurons[layer + 1] = self.forwardPass(self.neurons[layer], self.weights[layer], self.biases[layer]) 
+			self.neurons[layer + 1] = self.forwardPass(self.neurons[layer], self.weights[layer], self.biases[layer], layer == self.layers - 2) 
 
-		if self.learningType == 0 and self.checkOutput() == 1:
+		if self.checkOutput() == 1:
 			return -1
 
 		#Inccrease epoch elapsed
@@ -301,7 +366,7 @@ class Net:
 		#Back Propagation
 		delta = None
 		temp = []
-		self.prevDelta = None
+		#self.prevDelta = None
 
 		for layer in range(self.layers - 1, 0, -1):
 			inputWeights = None
@@ -317,4 +382,3 @@ class Net:
 				self.neurons[0][0][inputdatum] = self.x[0][self.trainingInput][inputdatum]
 
 		self.prevDelta = temp
-		self.totalEpochs += self.epochElapsed
