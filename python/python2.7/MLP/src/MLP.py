@@ -440,7 +440,7 @@ class Net:
 						maxProb = self.neurons[self.layers - 1][hot]
 						hotIndex = hot
 
-				print "\nPREDICTION: " + self.labels.get(hotIndex)
+				print "\nPREDICTION: " + self.labels.get(hotIndex) + " | CONFIDENCE: " + str(maxProb)
 
 			elif userCommand == "train":
 				print "Previous desired accuracy was " + str(self.desiredAccuracy)
