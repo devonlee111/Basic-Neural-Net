@@ -115,7 +115,8 @@ class Net:
 		elif self.learningType == 1:				# Initialize input neurons wof stochastic training
 			self.neurons.append(np.array(temp2))
 
-		self.x.append(np.array(temp))				# Initialize array of input training data
+		#self.x.append(np.array(temp))				# Initialize array of input training data
+		self.x = np.array(temp)					# Initialize array of input training data
 		self.yOneHot(distinctLabels, tempy)			# Generate one hot values for answers from explicit answers
 
 	# Initialize one hot values for all training outputs (y)
@@ -129,7 +130,9 @@ class Net:
 					answer[temp] = 1
 					self.y.append(np.array(answer))
 					break
-				temp += 1	
+				temp += 1
+
+		self.y = np.array(self.y)
 	
 	# Read user given argumnts
 	# Set global arguments base on given arguments
@@ -215,11 +218,11 @@ class Net:
 		self.initWeights()
 		self.initNeurons()
 		self.initBiases()
-		print "\nweights\n" + str(self.weights)
-		print "\nbiases\n" + str(self.biases)
-		print "\nneurons\n" + str(self.neurons)
-		print "\nx\n" + str(self.x)
-		print "\ny\n" + str(self.y)
+		#print "\nweights\n" + str(self.weights)
+		#print "\nbiases\n" + str(self.biases)
+		#print "\nneurons\n" + str(self.neurons)
+		#print "\nx\n" + str(self.x)
+		#print "\ny\n" + str(self.y)
 
 	#----------------------------------------------------#
 	################ Activation Functions ################
@@ -269,19 +272,11 @@ class Net:
 			return numerator / denominator
 		return numerator
 
-	def crossEntropy(self, x, y):
-		m = y.shape[0]
-		p = softmax(X)
-		logLikelihood = -np.log(p[range(m), y])
-		loss = np.sum(logLikelihood / m)
+	# Cross Entropy Log Loss Function
+	def crossEntropy(self, x):
+		m = self.y.shape[0]
+		loss = -np.sum(self.y * np.log(x + 1e-12)) / m
 		return loss
-
-	def crossEntropyDerivative(self, x, y):
-		m = y.shape[0]
-		grad = softmax(x)
-		grad[range(m), y] -= 1
-		grad /= m
-		return grad
 
 	#----------------------------------------#
 	########### Training Functions ###########
@@ -330,7 +325,6 @@ class Net:
 			elif self.learningType == 1:
 				error = self.y[self.trainingInput] - layer
 
-			#print error
 			delta = error
 			self.currentError = error
 
@@ -389,6 +383,9 @@ class Net:
 			#Print the error every 10000 epochs
 			if epochElapsed % 10000 == 0 or epochElapsed == 1:
 				print "Current Session Epoch: " + str(self.totalEpochs + epochElapsed) + " | Error:" + str(np.mean(np.abs(self.currentError)))	
+
+			if epochElapsed % 100 == 0:
+				print "Loss: " + str(self.crossEntropy(self.neurons[self.layers - 1]))
 
 			#Back Propagation
 			delta = None
