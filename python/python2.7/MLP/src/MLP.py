@@ -26,7 +26,8 @@ class Net:
 		self.desiredAccuracy = .05	# The threshhold accuracy to stop training
 		self.momentum = .01		# The momentum value to escape local minima
 		self.prevDelta = []		# The previous layer's delta during back propogation
-		self.currentError = -1		# The error from the last epoch
+		self.currentError = []		# The error from the last epoch
+		self.currentOutput = []		# The current output for all training data points. Updated individually for stochastic learning
 		self.totalEpochs = 0		# The total number of epochs to train over per session
 		self.trainingInput = 0		# The current input values for training (only used in stochastic training)
 	
@@ -115,7 +116,6 @@ class Net:
 		elif self.learningType == 1:				# Initialize input neurons wof stochastic training
 			self.neurons.append(np.array(temp2))
 
-		#self.x.append(np.array(temp))				# Initialize array of input training data
 		self.x = np.array(temp)					# Initialize array of input training data
 		self.yOneHot(distinctLabels, tempy)			# Generate one hot values for answers from explicit answers
 
@@ -205,12 +205,25 @@ class Net:
 				neuronLayer.append(0)
 
 			self.neurons.append(np.array(neuronLayer))
-
-	# Initialize Bias List using a uniform distribution
+	
+	# Initialize Bias list using a uniform distribution
 	def initBiases(self):
 		for layer in range(0, self.layers - 1):
 			bias = np.random.uniform(.01, .1, size = None)
 			self.biases = np.append(self.biases, bias)
+
+	# Initialize persistent arrays for storing error and current output
+	def initPersistent(self):
+		for example in range(0, len(self.x)):
+			trainingError = []
+			for index in range(0, len(self.y[0])):
+				trainingError.append(1.0)
+
+			self.currentError.append(trainingError)
+			self.currentOutput.append(trainingError)
+
+		self.currentError = np.array(self.currentError)
+		self.currentOutput = np.array(self.currentOutput)
 
 	# Fully initialize Neural Net
 	def initNeuralNet(self):
@@ -218,6 +231,7 @@ class Net:
 		self.initWeights()
 		self.initNeurons()
 		self.initBiases()
+		self.initPersistent()
 		#print "\nweights\n" + str(self.weights)
 		#print "\nbiases\n" + str(self.biases)
 		#print "\nneurons\n" + str(self.neurons)
@@ -298,6 +312,12 @@ class Net:
 		if classify:
 			nextLayer = self.softmax(nextLayer)
 
+			if self.learningType == 0:
+				self.currentOutput = nextLayer
+
+			elif self.learningType == 1:
+				self.currentOutput[self.trainingInput] = nextLayer
+		
 		elif self.activationFunction == 0:
 			nextLayer = self.tanh(nextLayer)
 
@@ -321,12 +341,13 @@ class Net:
 		if layerNum == self.layers - 1:
 			if self.learningType == 0:
 				error = self.y - layer
+				self.currentError = error
 
 			elif self.learningType == 1:
 				error = self.y[self.trainingInput] - layer
+				self.currentError[self.trainingInput] = error
 
 			delta = error
-			self.currentError = error
 
 		else:
 			error = dOutput.dot(inputWeights.T)	
@@ -385,7 +406,7 @@ class Net:
 				print "Current Session Epoch: " + str(self.totalEpochs + epochElapsed) + " | Error:" + str(np.mean(np.abs(self.currentError)))	
 
 			if epochElapsed % 100 == 0:
-				print "Loss: " + str(self.crossEntropy(self.neurons[self.layers - 1]))
+				print "Loss: " + str(self.crossEntropy(self.currentOutput))
 
 			#Back Propagation
 			delta = None
@@ -399,9 +420,8 @@ class Net:
 				temp.append(delta)
 
 			if self.learningType == 1:
-				self.trainingInput = np.random.randint(0, len(self.x[0]), None)
-				for inputdatum in range(0, self.shape[0]):
-					self.neurons[0][0][inputdatum] = self.x[0][self.trainingInput][inputdatum]
+				self.trainingInput = np.random.randint(0, len(self.x), None)
+				self.neurons[0][0] = self.x[self.trainingInput]
 
 			if self.checkOutput():
 				break
@@ -450,8 +470,6 @@ class Net:
 				self.printNet()
 
 			elif userCommand == "error":
-				print "Expected:" + str(self.y)
-				print self.currentError
 				print "Error:" + str(np.mean(np.abs(self.currentError)))
 
 			else:
