@@ -28,7 +28,9 @@ class Net:
 		self.desiredAccuracy = 0.5	# The threshold accuracy to stop training
 		self.momentum = .01		# The momentum value to escape local minima
 		self.prevDelta = []		# The previous layer's delta during back propogation
-		self.currentError = -1		# The error from the last epoch
+		self.currentError = []		# The current error for all training data points. Updated individually for stochastic learning
+		self.currentOutput = []		# The current output for all training data points. Updated individually for stochastic learning
+		self.loss = 0.0
 		self.epochElapsed = 0		# The total number of epochs trained over
 		self.epochs = 0			# The max number of epochs to train over
 
@@ -60,17 +62,27 @@ class Net:
 
 	# Completely wipe information from the neural net
 	def clearNet(self):
-		self.y = []
+		self.activationFunction = 0
+		self.learningType = 0
 		self.x = []
+		self.y = []
+		self.labels = dict()
+		self.layers = 0
+		self.shape = []
+		self.lr = .001
+		self.desiredAccuracy = 0.5
+		self.momentum = .01
+		self.prevDelta = []
+		self.currentError = []
+		self.currentOutput = []
+		self.loss = 0.0
+		self.epochElapsed = 0
+		self.epochs = 0
+		self.trainingInput = 0
 		self.weights = []
 		self.neurons = []
 		self.biases = []
 		self.init = False
-		self.learningRate = 0
-		self.learningType = -1
-		self.activationFunction = -1
-		self.epochElapsed = 0
-		self.epochs = 0
 
 	# Returns the shape of the neural net
 	def getShape(self):
@@ -126,7 +138,7 @@ class Net:
 		elif self.learningType == 1:
 			self.neurons.append(np.array(temp2))
 
-		self.x.append(np.array(temp))
+		self.x = np.array(temp)
 		self.yOneHot(distinctLabels, tempy)
 
 	def yOneHot(self, numLabels, y):
@@ -140,6 +152,8 @@ class Net:
 					break
 
 				temp += 1
+
+		self.y = np.array(self.y)
 
 	# Initialize weight matrix using a uniform distribution
 	def initWeights(self):
@@ -162,6 +176,18 @@ class Net:
 			bias = np.random.uniform(.01, .1, size = None)
 			self.biases = np.append(self.biases, bias)
 
+	def initPersistent(self):
+		for example in range(0, len(self.x)):
+			trainingError = []
+			for index in range(0, len(self.y[0])):
+				trainingError.append(1.0)
+
+			self.currentError.append(trainingError)
+			self.currentOutput.append(trainingError)
+
+		self.currentError = np.array(self.currentError)
+		self.currentOutput = np.array(self.currentOutput)
+
 	def setLearningRate(self, lr):
 		self.lr = (float)(lr)
 
@@ -183,11 +209,12 @@ class Net:
 
 	def setError(self, error):
 		self.error = (float)(error)
-		self.currentError = np.array([[-1.0],[-1.0],[-1.0],[-1.0]])
-		np.vstack(self.currentError)
 
 	def getError(self):
-		return self.currentError
+		return np.mean(np.abs(self.currentError))
+
+	def getLoss(self):
+		return self.loss
 
 	def setActivationFunction(self, activationFunction):
 		if activationFunction == "Tanh":
@@ -228,6 +255,7 @@ class Net:
 		self.initWeights()
 		self.initNeurons()
 		self.initBiases()
+		self.initPersistent()
 
 	# Change the configuration of the Neural Net
 	def editNet(self, lr, epochs, error):
@@ -275,6 +303,11 @@ class Net:
 
 		return np.exp(x) / float(sum(np.exp(x)))
 
+	def crossEntropy(self, x):
+		m = self.y.shape[0]
+		loss = -np.sum(self.y * np.log(x + 1e-12)) / m
+		return loss
+
 	#Check to see if the desired accuracy has been achieved
 	def checkOutput(self):
 		if np.mean(np.abs(self.currentError)) < self.error:
@@ -289,6 +322,12 @@ class Net:
 		nextLayer += layerBias
 		if classify:
 			nextLayer = self.softmax(nextLayer)
+
+			if self.learningType == 0:
+				self.currentOutput = nextLayer
+
+			elif self.learningType == 1:
+				self.currentOutput[self.trainingInput] = nextLayer
 
 		elif self.activationFunction == 0:
 			nextLayer = self.tanh(nextLayer)
@@ -318,7 +357,7 @@ class Net:
 
 			elif self.learningType == 1:
 				error = self.y[self.trainingInput] - layer
-				self.currentError.itemset((self.trainingInput, 0), error[0][0])
+				self.currentError[self.trainingInput] = error
 
 			delta = error
 
@@ -360,6 +399,8 @@ class Net:
 		if self.checkOutput() == 1:
 			return -1
 
+		self.loss = self.crossEntropy(self.currentOutput)
+
 		#Inccrease epoch elapsed
 		self.epochElapsed += 1
 
@@ -377,8 +418,7 @@ class Net:
 			temp.append(delta)
 
 		if self.learningType == 1:
-			self.trainingInput = np.random.randint(0, len(self.x[0]), None)
-			for inputdatum in range(0, self.shape[0]):
-				self.neurons[0][0][inputdatum] = self.x[0][self.trainingInput][inputdatum]
+			self.trainingInput = np.random.randint(0, len(self.x), None)
+			self.neurons[0][0] = self.x[self.trainingInput]
 
 		self.prevDelta = temp
