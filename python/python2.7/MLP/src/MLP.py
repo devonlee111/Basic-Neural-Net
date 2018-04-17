@@ -443,8 +443,24 @@ class Net:
 
 			elif userCommand == "predict":
 				inputs = []
+				isFile = False
 				for netInput in range(0, len(self.neurons[0][0])):
-					inputs.append(input("Please enter the next input datum.\n"))
+					newInput = raw_input("Please enter the next input datum.\n")
+					try:
+						f = open(newInput, "r")
+						isFile = True
+						break;
+
+					except:
+						inputs.append(int(newInput))
+
+				if isFile:
+					temp = []
+					line = f.readline()
+					line = line.rstrip("\n")
+					data = line.split(",")
+					data = map(float, data)
+					inputs = np.array(data)
 
 				self.neurons[1] = self.forwardPass(inputs, self.weights[0], self.biases[0], False)
 				for layer in range(1, self.layers - 1):
