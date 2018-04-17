@@ -171,7 +171,8 @@ class App():
 
 			layers.append(nodes)
 
-		self.canvas.create_text(self.canvas.winfo_width() - 100, 50, fill = "black", text = "Error: \n" + str(self.net.getError()))
+		self.canvas.create_text(self.canvas.winfo_width() - 80, 50, fill = "black", text = "Loss: \n" + str(self.net.getLoss())[0:7])
+		self.canvas.create_text(self.canvas.winfo_width() - 80, 80, fill = "black", text = "Error: \n" + str(self.net.getError())[0:7])
 		self.canvas.create_text(50, 50, fill = "black", text = "Epochs: \n" + str(self.net.getEpochs()))
 
 	def update(self):
