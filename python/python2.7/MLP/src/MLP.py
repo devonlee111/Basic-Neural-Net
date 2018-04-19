@@ -15,6 +15,7 @@ class Net:
 		# How we should train the neural net on thr data
 		# 0 = batch learning
 		# 1 = stochastic learning
+		# 2 = minibatches
 		self.learningType = 0
 
 		self.x = []			# Matrix of the all training data inputs
@@ -30,7 +31,8 @@ class Net:
 		self.currentOutput = []		# The current output for all training data points. Updated individually for stochastic learning
 		self.totalEpochs = 0		# The total number of epochs to train over per session
 		self.trainingInput = 0		# The current input values for training (only used in stochastic training)
-	
+		self.batchSize = 2
+
 		# Th matrix of weights
 		# Each entry is connection between layers
 		self.weights = []
@@ -83,6 +85,7 @@ class Net:
 		distinctLabels = 0
 
 		for dataPoint in range(0, dataSize):
+			distinctLabels += 1
 			line = trainingData.readline()		# Get next line of training data
 			line = line.rstrip("\n")
 
@@ -105,7 +108,7 @@ class Net:
 			data = map(float, data)
 			temp.append(data)
 
-			if self.learningType == 1 and dataPoint == 0:
+			if (self.learningType == 1 and dataPoint == 0) or (self.learningType == 2 and dataPoint < self.batchSize):
 				temp2.append(data)
 
 			tempy.append(answer)
@@ -113,7 +116,7 @@ class Net:
 		if self.learningType == 0:			 	# Initialize input neurons for batch training
 			self.neurons.append(np.array(temp))
 
-		elif self.learningType == 1:				# Initialize input neurons wof stochastic training
+		else:							# Initialize input neurons wof stochastic training
 			self.neurons.append(np.array(temp2))
 
 		self.x = np.array(temp)					# Initialize array of input training data
@@ -173,6 +176,9 @@ class Net:
 
 		elif self.data[3] == "stochastic":
 			self.learningType = 1
+
+		elif self.data[3] == "mini batch" or self.data[3] == "minibatch" or self.data[3] == "mbatch" or self.data == "minib":
+			self.learningType = 2
 
 		self.lr = float(self.data[4])
 
@@ -318,6 +324,9 @@ class Net:
 			elif self.learningType == 1:
 				self.currentOutput[self.trainingInput] = nextLayer
 		
+			elif self.learningType == 2:
+				self.currentOutput[self.trainingInput:self.trainingInput + self.batchSize] = nextLayer
+
 		elif self.activationFunction == 0:
 			nextLayer = self.tanh(nextLayer)
 
@@ -347,6 +356,10 @@ class Net:
 				error = self.y[self.trainingInput] - layer
 				self.currentError[self.trainingInput] = error
 
+			elif self.learningType == 2:
+				error = self.y[self.trainingInput, self.trainingInput + self.batchSize] - layer
+				self.currentError[self.trainingInput:self.trainingInput + self.batchSize] = error
+
 			delta = error
 
 		else:
@@ -369,7 +382,7 @@ class Net:
 
 			delta = error * slope
 
-		if not self.prevDelta or self.learningType == 0:
+		if not self.prevDelta or self.learningType == 0 or self.learningType == 2:
 			self.weights[layerNum - 1] += prevLayer.T.dot(delta) * self.lr
 
 		else:
@@ -408,6 +421,8 @@ class Net:
 			if epochElapsed % 100 == 0:
 				print "Loss: " + str(self.crossEntropy(self.currentOutput))
 
+			print self.neurons
+
 			#Back Propagation
 			delta = None
 			temp = []
@@ -422,6 +437,10 @@ class Net:
 			if self.learningType == 1:
 				self.trainingInput = np.random.randint(0, len(self.x), None)
 				self.neurons[0][0] = self.x[self.trainingInput]
+
+			elif self.learningType == 2:
+				self.trainingInput = np.random.randint(0, len(self.x) - self.batchSize, None)
+				self.neurons[0] = self.x[self.trainingInput:self.trainingInput + self.batchSize]
 
 			if self.checkOutput():
 				break
