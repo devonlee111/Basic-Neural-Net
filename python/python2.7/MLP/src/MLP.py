@@ -85,7 +85,6 @@ class Net:
 		distinctLabels = 0
 
 		for dataPoint in range(0, dataSize):
-			distinctLabels += 1
 			line = trainingData.readline()		# Get next line of training data
 			line = line.rstrip("\n")
 
@@ -233,16 +232,21 @@ class Net:
 
 	# Fully initialize Neural Net
 	def initNeuralNet(self):
+		print "Start Init"
 		self.parseArgs()
 		self.initWeights()
 		self.initNeurons()
 		self.initBiases()
 		self.initPersistent()
+		#print "End Init"
 		#print "\nweights\n" + str(self.weights)
 		#print "\nbiases\n" + str(self.biases)
 		#print "\nneurons\n" + str(self.neurons)
 		#print "\nx\n" + str(self.x)
 		#print "\ny\n" + str(self.y)
+		#print "\ncurrent output\n" + str(self.currentOutput)
+		#print "\ncurrentError\n" + str(self.currentError)
+
 
 	#----------------------------------------------------#
 	################ Activation Functions ################
@@ -357,8 +361,8 @@ class Net:
 				self.currentError[self.trainingInput] = error
 
 			elif self.learningType == 2:
-				error = self.y[self.trainingInput, self.trainingInput + self.batchSize] - layer
-				self.currentError[self.trainingInput:self.trainingInput + self.batchSize] = error
+				error = self.y[self.trainingInput : self.trainingInput + self.batchSize] - layer
+				self.currentError[self.trainingInput : self.trainingInput + self.batchSize] = error
 
 			delta = error
 
@@ -420,8 +424,6 @@ class Net:
 
 			if epochElapsed % 100 == 0:
 				print "Loss: " + str(self.crossEntropy(self.currentOutput))
-
-			print self.neurons
 
 			#Back Propagation
 			delta = None
