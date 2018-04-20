@@ -17,6 +17,7 @@ class Net:
 		# How we should train the neural net on the data
 		# 0 = batch learning
 		# 1 = stochastic learning
+		# 2 = mini batch learning
 		self.learningType = 0
 
 		self.x = []			# Matrix of all the training data inputs
@@ -35,6 +36,7 @@ class Net:
 		self.epochs = 0			# The max number of epochs to train over
 
 		self.trainingInput = 0		# The current input values for training (only used in stochastic training)
+		self.batchSize = 100		# The size of the mini batch to us in training
 
 		# The matrix of weights
 		# Each entry is a connection between layers
@@ -83,6 +85,7 @@ class Net:
 		self.neurons = []
 		self.biases = []
 		self.init = False
+		self.batchSize = 100
 
 	# Returns the shape of the neural net
 	def getShape(self):
@@ -127,7 +130,7 @@ class Net:
 			data = map(float, data)
 			temp.append(data)
 
-			if self.learningType == 1 and dataPoint == 0:
+			if (self.learningType == 1 and dataPoint == 0) or (self.learningType == 2 and dataPoint < self.batchSize):
 				temp2.append(data)
 			
 			tempy.append(answer)
@@ -135,7 +138,7 @@ class Net:
 		if self.learningType == 0:
 			self.neurons.append(np.array(temp))
 
-		elif self.learningType == 1:
+		else:
 			self.neurons.append(np.array(temp2))
 
 		self.x = np.array(temp)
@@ -236,20 +239,29 @@ class Net:
 		elif learningType == "Stochastic":
 			self.learningType = 1
 
+		elif learningType == "Mini Batches":
+			self.learningType = 2
+
 	def setShape(self, shape):
 		self.shape = shape.split()
 		self.shape = map(int, self.shape)
 		self.layers = len(self.shape)
 
+	def setBatchSize(self, size):
+		self.batchSize = size
+
+	def getBatchSize(self):
+		return self.batchSize
 	
 	# Fully Initialized Neural Net
-	def initNeuralNet(self, lr, epochs, error, activationFunction, learningType, trainingData, shape):
+	def initNeuralNet(self, lr, epochs, error, activationFunction, learningType, trainingData, shape, batchSize):
 		self.clearNet()
 		self.setLearningRate(lr)
 		self.setEpochs(epochs)
 		self.setError(error)
 		self.setActivationFunction(activationFunction)
 		self.setLearningType(learningType)
+		self.setBatchSize(batchSize)
 		self.setShape(shape)
 		self.initTrainingData(open(trainingData))
 		self.initWeights()
@@ -318,6 +330,8 @@ class Net:
 	# Feed Forward Algorithm
 	# Calculates the value(s) of the next layer
 	def forwardPass(self, inputLayer, inputWeights, layerBias, classify):
+		print inputLayer
+		print inputWeights
 		nextLayer = np.dot(inputLayer, inputWeights)
 		nextLayer += layerBias
 		if classify:
@@ -328,6 +342,9 @@ class Net:
 
 			elif self.learningType == 1:
 				self.currentOutput[self.trainingInput] = nextLayer
+
+			elif self.learningType == 2:
+				self.currentOutput[self.trainingInput : self.trainingInput + self.batchSize] = nextLayer
 
 		elif self.activationFunction == 0:
 			nextLayer = self.tanh(nextLayer)
@@ -359,6 +376,10 @@ class Net:
 				error = self.y[self.trainingInput] - layer
 				self.currentError[self.trainingInput] = error
 
+			elif self.learningType == 2:
+				error = self.y[self.trainingInput : self.trainingInput + self.batchSize] -layer
+				self.currentError[self.trainingInput : self.trainingInput + self.batchSize] = error
+
 			delta = error
 
 		else:
@@ -381,7 +402,7 @@ class Net:
 
 			delta = error * slope
 
-		if not self.prevDelta or self.learningType == 0:
+		if not self.prevDelta or self.learningType == 0 or self.learningType == 2:
 			self.weights[layerNum - 1] += prevLayer.T.dot(delta) * lr
 
 		else:
@@ -420,5 +441,9 @@ class Net:
 		if self.learningType == 1:
 			self.trainingInput = np.random.randint(0, len(self.x), None)
 			self.neurons[0][0] = self.x[self.trainingInput]
+
+		elif self.learningType == 2:
+			self.trainingInput = np.random.randint(0, len(self.x) - self.batchSize, None)
+			self.neurons[0] = self.x[self.trainingInput : self.trainingInput + self.batchSize]
 
 		self.prevDelta = temp
