@@ -72,10 +72,25 @@ When given a single image path, it will generate a file that can be used to test
 When given a path to a directory, the directory should contain sub-directories that are filled with images of the same size/resolution. The name of the sub-directory the image is in will be the label associated with the image.
 
 # Sources
-net.py original code (this is what I used to intially learn about building a neural net): 
+### Websites I used for learning and references:
+**net.py original code (this is what I used to intially learn about building a neural net):**
 
 https://www.analyticsvidhya.com/blog/2017/05/neural-network-from-scratch-in-python-and-r/
 
-Other useful sights for understanding and learning about neural net basics:
+**Other useful sights for understanding and learning about neural net basics:**
 
 http://iamtrask.github.io/2015/07/12/basic-python-network/
+
+https://beckernick.github.io/neural-network-scratch/
+
+http://www.wildml.com/2015/09/implementing-a-neural-network-from-scratch/
+
+https://ayearofai.com/rohan-4-the-vanishing-gradient-problem-ec68f76ffb9b
+
+https://github.com/Kulbear/deep-learning-nano-foundation/wiki/ReLU-and-Softmax-Activation-Functions
+
+https://machinelearningmastery.com/neural-networks-crash-course/
+
+http://thelaziestprogrammer.com/sharrington/math-of-machine-learning/the-gradient-a-visual-descent
+
+https://jamesmccaffrey.wordpress.com/2017/06/06/neural-network-momentum/
