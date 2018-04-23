@@ -161,24 +161,26 @@ class App():
 	def drawNet(self):
 		self.canvas.delete("all");
 		shape = self.net.getShape()
-		layerDist = self.canvas.winfo_width() / ((len(shape)) + 1)
+		layerDist = float(self.canvas.winfo_width()) / float(((len(shape)) + 1))
 		layers = []
-		
+		nodeSize = 1
+		weightSize = 1
+
 		for layer in range(len(shape)):
 			prevNodes = []
 			layerPos = (layer + 1) * layerDist
-			nodeDist = self.canvas.winfo_height() / (shape[layer] + 1)
+			nodeDist = float(self.canvas.winfo_height() - 40) / float((shape[layer] + 1))
 			nodes = []
 			
 			for node in range(shape[layer]):
-				nodePos = (node + 1) * nodeDist
+				nodePos = ((node + 1) * nodeDist) + 20
 				nodes.append(nodePos)
-				self.canvas.create_oval(layerPos - 20, nodePos - 20, layerPos + 20, nodePos + 20, fill="black")
+				self.canvas.create_oval(layerPos - nodeSize, nodePos - nodeSize, layerPos + nodeSize, nodePos + nodeSize, fill="black")
 
 				if layer > 0:
 					for prevNode in range(shape[layer - 1]):
-						line = self.canvas.create_line(layer * layerDist, layers[layer - 1][prevNode], layerPos, nodePos, fill = "blue", width = 5)
-						self.canvas.tag_lower(line)	
+						line = self.canvas.create_line(layer * layerDist, layers[layer - 1][prevNode], layerPos, nodePos, fill = "blue", width = weightSize)
+						self.canvas.tag_lower(line)
 
 			layers.append(nodes)
 
