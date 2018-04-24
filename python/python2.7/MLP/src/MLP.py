@@ -419,11 +419,12 @@ class Net:
 			epochElapsed += 1
 
 			#Print the error every 10000 epochs
-			if epochElapsed % 10000 == 0 or epochElapsed == 1:
-				print "Current Session Epoch: " + str(self.totalEpochs + epochElapsed) + " | Error:" + str(np.mean(np.abs(self.currentError)))	
+			#if epochElapsed % 10000 == 0 or epochElapsed == 1:
+			#	print "Current Session Epoch: " + str(self.totalEpochs + epochElapsed) + " | Error:" + str(np.mean(np.abs(self.currentError)))	
 
 			if epochElapsed % 100 == 0:
-				print "Loss: " + str(self.crossEntropy(self.currentOutput))
+				sys.stdout.write("Epoch: %d \t| Loss: %.4f | Error: %.4f\r" % (self.totalEpochs + epochElapsed, self.crossEntropy(self.currentOutput), np.mean(np.abs(self.currentError))))
+				sys.stdout.flush()
 
 			#Back Propagation
 			delta = None
