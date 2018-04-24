@@ -248,13 +248,13 @@ class Net:
 		self.layers = len(self.shape)
 
 	def setBatchSize(self, size):
-		self.batchSize = size
+		self.batchSize = int(size)
 
 	def getBatchSize(self):
 		return self.batchSize	
 
 	# Fully Initialized Neural Net
-	def initNeuralNet(self, lr, epochs, error, activationFunction, learningType, trainingData, shape):
+	def initNeuralNet(self, lr, epochs, error, activationFunction, learningType, trainingData, shape, batchSize):
 		self.clearNet()
 		self.setLearningRate(lr)
 		self.setEpochs(epochs)
@@ -376,7 +376,7 @@ class Net:
 
 			elif self.learningType == 2:
 				error = self.y[self.trainingInput : self.trainingInput + self.batchSize] - layer
-				self.currentError[self.trainingInput : self.traininginput + self.batchSize] = error
+				self.currentError[self.trainingInput : self.trainingInput + self.batchSize] = error
 
 			delta = error
 
@@ -413,6 +413,7 @@ class Net:
 	def trainingPass(self):
 		#Forward Propogation
 		for layer in range(0, self.layers - 1):
+			print(len(self.neurons[0]))
 			self.neurons[layer + 1] = self.forwardPass(self.neurons[layer], self.weights[layer], self.biases[layer], layer == self.layers - 2) 
 
 		if self.checkOutput() == 1:
@@ -441,7 +442,7 @@ class Net:
 			self.neurons[0][0] = self.x[self.trainingInput]
 
 		elif self.learningType == 2:
-			self.trainingInput = np.random.randint(0, len(self.x) - selfbatchSize, None)
+			self.trainingInput = np.random.randint(0, len(self.x) - self.batchSize, None)
 			self.neurons[0] = self.x[self.trainingInput : self.trainingInput + self.batchSize]
 
 		self.prevDelta = temp

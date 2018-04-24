@@ -60,7 +60,7 @@ class App():
 		# Create a drowdown menu to select training type.
 		self.learningType = tk.StringVar(self.root)
 		self.learningType.set("Batch")
-		self.trainingMenu = tk.OptionMenu(settingsFrame, self.learningType, "Batch", "Stochastic")
+		self.trainingMenu = tk.OptionMenu(settingsFrame, self.learningType, "Batch", "Stochastic", "Mini Batches")
 		self.trainingMenu.grid(row = 7, column = 0, sticky = tk.W)	
 
 		self.batchSlider = tk.Scale(settingsFrame, label = "Mini Batch Size", from_ = 10, to = 1000, orient = tk.HORIZONTAL, length = 200, resolution = 10, command = self.setBatch)
@@ -121,7 +121,7 @@ class App():
 
 	def setBatch(self, batchSize):
 		self.batchInput.delete(0, tk.END)
-		self.batch.insert(0, error)
+		self.batchInput.insert(0, batchSize)
 
 	def selectTrainingData(self):
 		self.trainingData = filedialog.askopenfilename(initialdir = "/", title = "Select a file", filetypes = (("text files", "*.txt"),))
