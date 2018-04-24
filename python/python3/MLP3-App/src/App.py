@@ -1,7 +1,7 @@
-import Tkinter as tk
+import tkinter as tk
 import numpy as np
-import tkFileDialog
-import MLPV
+from tkinter import filedialog
+import MLPV3
 
 class App():
 
@@ -62,44 +62,50 @@ class App():
 		self.learningType.set("Batch")
 		self.trainingMenu = tk.OptionMenu(settingsFrame, self.learningType, "Batch", "Stochastic")
 		self.trainingMenu.grid(row = 7, column = 0, sticky = tk.W)	
-		
+
+		self.batchSlider = tk.Scale(settingsFrame, label = "Mini Batch Size", from_ = 10, to = 1000, orient = tk.HORIZONTAL, length = 200, resolution = 10, command = self.setBatch)
+		self.batchSlider.grid(row = 8, column = 0, stick = tk.W)
+
+		self.batchInput = tk.Entry(settingsFrame)
+		self.batchInput.grid(row = 9, column = 0, sticky = tk.W)
+
 		# Create a table and entry to input neural net shape
-		tk.Label(settingsFrame, text = "Neural Net Shape").grid(row = 8, column = 0, sticky = tk.W);
+		tk.Label(settingsFrame, text = "Neural Net Shape").grid(row = 10, column = 0, sticky = tk.W);
 		self.shapeInput = tk.Entry(settingsFrame)
-		self.shapeInput.grid(row = 9, column = 0, sticky = tk.W)
+		self.shapeInput.grid(row = 11, column = 0, sticky = tk.W)
 
 		# Create a button that allows you to select a file for training data.
 		self.selectFileBtn = tk.Button(settingsFrame, text = "Select Training Data", command = self.selectTrainingData)
-		self.selectFileBtn.grid(row = 10, column = 0, sticky = tk.W, pady = 10)
+		self.selectFileBtn.grid(row = 12, column = 0, sticky = tk.W, pady = 10)
 
 		self.dataFile = tk.StringVar(self.root)	
 		self.dataFile.set("No Data File Selected");
 		self.selectedData = tk.Label(settingsFrame, textvariable = self.dataFile, wraplength = 200, anchor = tk.W, justify = tk.LEFT)
-		self.selectedData.grid(row = 11, column = 0, sticky = tk.W);
+		self.selectedData.grid(row = 13, column = 0, sticky = tk.W);
 
 		# Create a button to initialize network
 		self.initBtn = tk.Button(settingsFrame, text = "Initialize", command = self.initNet)
-		self.initBtn.grid(row = 12, column = 0, sticky = tk.W)
+		self.initBtn.grid(row = 14, column = 0, sticky = tk.W)
 
 		# Create a button to edit the nerual net parameters
 		self.editBtn = tk.Button(settingsFrame, text = "Re-initialize Parameters", command = self.editNet)
-		self.editBtn.grid(row = 13, column = 0, sticky = tk.W)
+		self.editBtn.grid(row = 15, column = 0, sticky = tk.W)
 
 		# Create a button to start network training.
 		self.runBtn = tk.Button(settingsFrame, text = "Train", command = self.startNet)
-		self.runBtn.grid(row = 14, column = 0, sticky = tk.W)
+		self.runBtn.grid(row = 16, column = 0, sticky = tk.W)
 
 		# Create a button to stop network training.
 		self.stopBtn = tk.Button(settingsFrame, text = "Stop", command = self.stopNet)
-		self.stopBtn.grid(row = 15, column = 0, sticky = tk.W)
+		self.stopBtn.grid(row = 17, column = 0, sticky = tk.W)
 
 		# Create a label telling the status of the net.
 		self.status = tk.StringVar(self.root)
 		self.status.set("Running: " + str(self.running));
 		self.currentStatus = tk.Label(settingsFrame, textvariable = self.status, wraplength = 200, anchor = tk.W, justify = tk.LEFT)
-		self.currentStatus.grid(row = 16, column = 0, sticky = tk.W)
+		self.currentStatus.grid(row = 18, column = 0, sticky = tk.W)
 
-		self.net = MLPV.Net()
+		self.net = MLPV3.Net()
 
 	def setLearningRate(self, lr):
 		self.lrInput.delete(0, tk.END)
@@ -113,8 +119,12 @@ class App():
 		self.errorInput.delete(0, tk.END)
 		self.errorInput.insert(0, error)
 
+	def setBatch(self, batchSize):
+		self.batchInput.delete(0, tk.END)
+		self.batch.insert(0, error)
+
 	def selectTrainingData(self):
-		self.trainingData = tkFileDialog.askopenfilename(initialdir = "/", title = "Select a file", filetypes = (("text files", "*.txt"),))
+		self.trainingData = filedialog.askopenfilename(initialdir = "/", title = "Select a file", filetypes = (("text files", "*.txt"),))
 		self.dataFile.set(self.trainingData)
 
 	def setInputs(self):
@@ -122,6 +132,7 @@ class App():
 		self.epochs = self.epochInput.get()
 		self.error = self.errorInput.get()
 		self.shape = self.shapeInput.get()
+		self.batchSize = self.batchInput.get()
 
 	def startNet(self):
 		self.net.setInit(True)
@@ -134,10 +145,10 @@ class App():
 		self.setInputs()
 
 		if any(c.isalpha() for c in self.lr) or any(c.isalpha() for c in self.epochs) or any(c.isalpha() for c in self.error) or any(c.isalpha() for c in self.shape):
-			print "Should not cointain alpha characters."
+			print("Should not cointain alpha characters.")
 
 		else :
-			self.net.initNeuralNet(self.lr, self.epochs, self.error, self.activationFunction.get(), self.learningType.get(), self.trainingData, self.shape)	
+			self.net.initNeuralNet(self.lr, self.epochs, self.error, self.activationFunction.get(), self.learningType.get(), self.trainingData, self.shape, self.batchSize)
 
 		self.drawNet()
 
@@ -152,21 +163,23 @@ class App():
 		shape = self.net.getShape()
 		layerDist = self.canvas.winfo_width() / ((len(shape)) + 1)
 		layers = []
-		
+		nodeSize = 5
+		weightSize = 3
+
 		for layer in range(len(shape)):
 			prevNodes = []
 			layerPos = (layer + 1) * layerDist
-			nodeDist = self.canvas.winfo_height() / (shape[layer] + 1)
+			nodeDist = float(self.canvas.winfo_height() - 40) / float((shape[layer] + 1))
 			nodes = []
 			
 			for node in range(shape[layer]):
-				nodePos = (node + 1) * nodeDist
+				nodePos = ((node + 1) * nodeDist) + 20
 				nodes.append(nodePos)
-				self.canvas.create_oval(layerPos - 20, nodePos - 20, layerPos + 20, nodePos + 20, fill="black")
+				self.canvas.create_oval(layerPos - nodeSize, nodePos - nodeSize, layerPos + nodeSize, nodePos + nodeSize, fill="black")
 
 				if layer > 0:
 					for prevNode in range(shape[layer - 1]):
-						line = self.canvas.create_line(layer * layerDist, layers[layer - 1][prevNode], layerPos, nodePos, fill = "blue", width = 5)
+						line = self.canvas.create_line(layer * layerDist, layers[layer - 1][prevNode], layerPos, nodePos, fill = "blue", width = weightSize)
 						self.canvas.tag_lower(line)	
 
 			layers.append(nodes)
