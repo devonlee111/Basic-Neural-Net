@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 import sys
 
 class Net:
@@ -33,6 +34,7 @@ class Net:
 		self.totalEpochs = 0		# The total number of epochs to train over per session
 		self.trainingInput = 0		# The current input values for training (only used in stochastic training)
 		self.batchSize = 100
+		self.randomOrder = []
 		self.lossHistory = []
 		self.errorHistory = []
 		self.epochHistory = []
@@ -89,6 +91,7 @@ class Net:
 		distinctLabels = 0
 
 		for dataPoint in range(0, dataSize):
+			self.randomOrder.append(dataPoint)
 			line = trainingData.readline()		# Get next line of training data
 			line = line.rstrip("\n")
 
@@ -333,7 +336,8 @@ class Net:
 				self.currentOutput[self.trainingInput] = nextLayer
 		
 			elif self.learningType == 2:
-				self.currentOutput[self.trainingInput:self.trainingInput + self.batchSize] = nextLayer
+				for index in range(0, self.batchSize):
+					self.currentOutput[self.randomOrder[index]] = nextLayer[index]
 
 		elif self.activationFunction == 0:
 			nextLayer = self.tanh(nextLayer)
@@ -365,8 +369,12 @@ class Net:
 				self.currentError[self.trainingInput] = error
 
 			elif self.learningType == 2:
-				error = self.y[self.trainingInput : self.trainingInput + self.batchSize] - layer
-				self.currentError[self.trainingInput : self.trainingInput + self.batchSize] = error
+				error = []
+				for index in range(0, self.batchSize):
+					error.append(self.y[self.randomOrder[index]] - layer[index])
+					self.currentError[self.randomOrder[index]] = error[index]
+
+				error = np.array(error)
 
 			delta = error
 
@@ -451,8 +459,12 @@ class Net:
 				self.neurons[0][0] = self.x[self.trainingInput]
 
 			elif self.learningType == 2:
-				self.trainingInput = np.random.randint(0, len(self.x) - self.batchSize, None)
-				self.neurons[0] = self.x[self.trainingInput:self.trainingInput + self.batchSize]
+				np.random.shuffle(self.randomOrder)
+				for index in range(0, self.batchSize):
+					 self.neurons[0][index] = self.x[self.randomOrder[index]]
+
+				#self.trainingInput = np.random.randint(0, len(self.x) - self.batchSize, None)
+				#self.neurons[0] = self.x[self.trainingInput:self.trainingInput + self.batchSize]
 
 			if self.checkOutput():
 				break
@@ -520,8 +532,9 @@ class Net:
 				print "Error:" + str(np.mean(np.abs(self.currentError)))
 
 			elif userCommand == "graph":	
-				plt.plot(self.errorHistory, marker = 'o')
-				plt.plot(self.lossHistory, marker = 'o')
+				errorPlot, = plt.plot(self.errorHistory, marker = 'o', label = 'Error')
+				lossPlot, = plt.plot(self.lossHistory, marker = '^', label = 'Loss')
+				plt.legend([errorPlot, lossPlot],['Error', 'Loss'])
 				plt.savefig('plot.png')			
 
 			else:
