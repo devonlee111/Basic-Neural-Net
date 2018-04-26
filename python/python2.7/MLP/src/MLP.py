@@ -532,9 +532,12 @@ class Net:
 				print "Error:" + str(np.mean(np.abs(self.currentError)))
 
 			elif userCommand == "graph":	
-				errorPlot, = plt.plot(self.errorHistory, marker = 'o', label = 'Error')
-				lossPlot, = plt.plot(self.lossHistory, marker = '^', label = 'Loss')
+				errorPlot, = plt.plot(self.epochHistory, self.errorHistory, marker = 'o', label = 'Error')
+				lossPlot, = plt.plot(self.epochHistory, self.lossHistory, marker = '^', label = 'Loss')
 				plt.legend([errorPlot, lossPlot],['Error', 'Loss'])
+				plt.suptitle(self.data[1])
+				plt.xlabel('Epoch')
+				plt.ylabel('Value')
 				plt.savefig('plot.png')			
 
 			else:
