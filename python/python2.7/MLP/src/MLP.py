@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import sys
 
 class Net:
@@ -24,14 +25,17 @@ class Net:
 		self.layers = 0			# The number of layers in the neural net
 		self.shape = []			# The number of neurons in each layer
 		self.lr = 0.001			# The learning rate of the neural network
-		self.desiredAccuracy = .05	# The threshhold accuracy to stop training
+		self.desiredAccuracy = .03	# The threshhold accuracy to stop training
 		self.momentum = .01		# The momentum value to escape local minima
 		self.prevDelta = []		# The previous layer's delta during back propogation
 		self.currentError = []		# The error from the last epoch
 		self.currentOutput = []		# The current output for all training data points. Updated individually for stochastic learning
 		self.totalEpochs = 0		# The total number of epochs to train over per session
 		self.trainingInput = 0		# The current input values for training (only used in stochastic training)
-		self.batchSize = 2
+		self.batchSize = 100
+		self.lossHistory = []
+		self.errorHistory = []
+		self.epochHistory = []
 
 		# Th matrix of weights
 		# Each entry is connection between layers
@@ -423,7 +427,12 @@ class Net:
 			#	print "Current Session Epoch: " + str(self.totalEpochs + epochElapsed) + " | Error:" + str(np.mean(np.abs(self.currentError)))	
 
 			if epochElapsed % 100 == 0:
-				sys.stdout.write("Epoch: %d \t| Loss: %.4f | Error: %.4f\r" % (self.totalEpochs + epochElapsed, self.crossEntropy(self.currentOutput), np.mean(np.abs(self.currentError))))
+				loss = self.crossEntropy(self.currentOutput)
+				error = np.mean(np.abs(self.currentError))
+				self.lossHistory.append(loss)
+				self.errorHistory.append(error)
+				self.epochHistory.append(epochElapsed)
+				sys.stdout.write("Epoch: %d \t| Loss: %.4f | Error: %.4f\r" % (self.totalEpochs + epochElapsed, loss, error))
 				sys.stdout.flush()
 
 			#Back Propagation
@@ -458,7 +467,7 @@ class Net:
 
 	def run(self):
 		while True:
-			userCommand = raw_input("\nNeural Net has finished its training. Here is a list of available commands.\n\"predict\"\tNeural Net is ready to process and predict your input.\n\"train\"\t\tNeural Net may be trained further.\n\"print\"\t\tPrint the values of the neural net.\n\"error\"\t\tPrint the current error.\n\"quit\"\t\tQuit the program\n--> ")
+			userCommand = raw_input("\nNeural Net has finished its training. Here is a list of available commands.\n\"predict\"\tNeural Net is ready to process and predict your input.\n\"train\"\t\tNeural Net may be trained further.\n\"print\"\t\tPrint the values of the neural net.\n\"error\"\t\tPrint the current error.\n\"graph\"\t\tCreate a loss and error graph png\n\"quit\"\t\tQuit the program\n--> ")
 			if userCommand == "quit" or userCommand == "exit" or userCommand == "q":
 				print "Thank you for using my neural net program.\n"
 				sys.exit(0)
@@ -509,6 +518,11 @@ class Net:
 
 			elif userCommand == "error":
 				print "Error:" + str(np.mean(np.abs(self.currentError)))
+
+			elif userCommand == "graph":	
+				plt.plot(self.errorHistory, marker = 'o')
+				plt.plot(self.lossHistory, marker = 'o')
+				plt.savefig('plot.png')			
 
 			else:
 				print "That is not a valid command.\n"
