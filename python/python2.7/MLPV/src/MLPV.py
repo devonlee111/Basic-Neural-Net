@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 import sys
 
 class Net:
@@ -37,6 +39,10 @@ class Net:
 
 		self.trainingInput = 0		# The current input values for training (only used in stochastic training)
 		self.batchSize = 100		# The size of the mini batch to us in training
+		self.randomOrder = []
+		self.lossHistory = []
+		self.errorHistory = []
+		self.epochHistory = []
 
 		# The matrix of weights
 		# Each entry is a connection between layers
@@ -108,6 +114,7 @@ class Net:
 		distinctLabels = 0
 
 		for dataPoint in range(0, dataSize):
+			self.randomOrder.append(dataPoint)
 			line = trainingData.readline()
 			line = line.rstrip("\n")
 
@@ -248,7 +255,7 @@ class Net:
 		self.layers = len(self.shape)
 
 	def setBatchSize(self, size):
-		self.batchSize = size
+		self.batchSize = int(size)
 
 	def getBatchSize(self):
 		return self.batchSize
@@ -320,6 +327,15 @@ class Net:
 		loss = -np.sum(self.y * np.log(x + 1e-12)) / m
 		return loss
 
+	def generateGraph(self, title):
+		errorPlot, = plt.plot(self.epochHistory, self.errorHistory, marker = 'o', label = 'Error')
+		lossPlot, = plt.plot(self.epochHistory, self.lossHistory, marker = '^', label = 'Loss')
+		plt.legend([errorPlot, lossPlot],['Error', 'Loss'])
+		plt.suptitle(title)
+		plt.xlabel('Epoch')
+		plt.ylabel('Value')
+		plt.savefig('plot.png')	
+
 	#Check to see if the desired accuracy has been achieved
 	def checkOutput(self):
 		if np.mean(np.abs(self.currentError)) < self.error:
@@ -330,8 +346,6 @@ class Net:
 	# Feed Forward Algorithm
 	# Calculates the value(s) of the next layer
 	def forwardPass(self, inputLayer, inputWeights, layerBias, classify):
-		print inputLayer
-		print inputWeights
 		nextLayer = np.dot(inputLayer, inputWeights)
 		nextLayer += layerBias
 		if classify:
@@ -344,7 +358,8 @@ class Net:
 				self.currentOutput[self.trainingInput] = nextLayer
 
 			elif self.learningType == 2:
-				self.currentOutput[self.trainingInput : self.trainingInput + self.batchSize] = nextLayer
+				for index in range(0, self.batchSize):
+					self.currentOutput[self.randomOrder[index]] = nextLayer[index]
 
 		elif self.activationFunction == 0:
 			nextLayer = self.tanh(nextLayer)
@@ -377,8 +392,12 @@ class Net:
 				self.currentError[self.trainingInput] = error
 
 			elif self.learningType == 2:
-				error = self.y[self.trainingInput : self.trainingInput + self.batchSize] -layer
-				self.currentError[self.trainingInput : self.trainingInput + self.batchSize] = error
+				error = []
+				for index in range(0, self.batchSize):
+					error.append(self.y[self.randomOrder[index]] - layer[index])
+					self.currentError[self.randomOrder[index]] = error[index]
+
+				error = np.array(error)
 
 			delta = error
 
@@ -424,6 +443,12 @@ class Net:
 
 		#Inccrease epoch elapsed
 		self.epochElapsed += 1
+		if self.epochElapsed % 100 == 0:
+		 	loss = self.crossEntropy(self.currentOutput)
+			error = np.mean(np.abs(self.currentError))
+			self.lossHistory.append(loss)
+			self.errorHistory.append(error)
+			self.epochHistory.append(self.epochElapsed)
 
 		#Back Propagation
 		delta = None
@@ -443,7 +468,8 @@ class Net:
 			self.neurons[0][0] = self.x[self.trainingInput]
 
 		elif self.learningType == 2:
-			self.trainingInput = np.random.randint(0, len(self.x) - self.batchSize, None)
-			self.neurons[0] = self.x[self.trainingInput : self.trainingInput + self.batchSize]
+			np.random.shuffle(self.randomOrder)
+			for index in range(0, self.batchSize):
+				self.neurons[0][index] = self.x[self.randomOrder[index]]
 
 		self.prevDelta = temp
