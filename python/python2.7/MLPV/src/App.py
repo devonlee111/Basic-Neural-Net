@@ -99,11 +99,16 @@ class App():
 		self.stopBtn = tk.Button(settingsFrame, text = "Stop", command = self.stopNet)
 		self.stopBtn.grid(row = 17, column = 0, sticky = tk.W)
 
+		self.graphBtn = tk.Button(settingsFrame, text = "Generate Graph", command = self.generateGraph)
+		self.graphBtn.grid(row = 18, column = 0, sticky = tk.W)
+
 		# Create a label telling the status of the net.
 		self.status = tk.StringVar(self.root)
 		self.status.set("Running: " + str(self.running));
 		self.currentStatus = tk.Label(settingsFrame, textvariable = self.status, wraplength = 200, anchor = tk.W, justify = tk.LEFT)
-		self.currentStatus.grid(row = 18, column = 0, sticky = tk.W)
+		self.currentStatus.grid(row = 19, column = 0, sticky = tk.W)
+
+		self.infoText = []
 
 		self.net = MLPV.Net()
 
@@ -122,6 +127,9 @@ class App():
 	def setBatch(self, batchSize):
 		self.batchInput.delete(0, tk.END)
 		self.batchInput.insert(0, batchSize)
+
+	def generateGraph(self):
+		self.net.generateGraph(self.trainingData)
 
 	def selectTrainingData(self):
 		self.trainingData = tkFileDialog.askopenfilename(initialdir = "/", title = "Select a file", filetypes = (("text files", "*.txt"),))
@@ -184,9 +192,16 @@ class App():
 
 			layers.append(nodes)
 
-		self.canvas.create_text(self.canvas.winfo_width() - 80, 50, fill = "black", text = "Loss: \n" + str(self.net.getLoss())[0:7])
-		self.canvas.create_text(self.canvas.winfo_width() - 80, 80, fill = "black", text = "Error: \n" + str(self.net.getError())[0:7])
-		self.canvas.create_text(50, 50, fill = "black", text = "Epochs: \n" + str(self.net.getEpochs()))
+		self.drawInfo()
+
+	def drawInfo(self):
+		for index in range(0, len(self.infoText)):
+			self.canvas.delete(self.infoText[index])
+
+		self.infoText = []
+		self.infoText.append(self.canvas.create_text(self.canvas.winfo_width() - 80, 50, fill = "black", text = "Loss: \n" + str(self.net.getLoss())[0:7]))
+		self.infoText.append(self.canvas.create_text(self.canvas.winfo_width() - 80, 80, fill = "black", text = "Error: \n" + str(self.net.getError())[0:7]))
+		self.infoText.append(self.canvas.create_text(50, 50, fill = "black", text = "Epochs: \n" + str(self.net.getEpochs())))
 
 	def update(self):
 		if self.net.shouldContinue() == False:
@@ -197,7 +212,7 @@ class App():
 		if self.net.isInit():		
 			if self.net.shouldContinue() and self.running:
 				self.net.trainingPass()
-				self.drawNet()
+				self.drawInfo()
 
 	def run(self):
 		while(True):
