@@ -33,12 +33,12 @@ class Net:
 		self.currentOutput = []		# The current output for all training data points. Updated individually for stochastic learning
 		self.totalEpochs = 0		# The total number of epochs to train over per session
 		self.trainingInput = 0		# The current input values for training (only used in stochastic training)
-		self.batchSize = 100
-		self.randomOrder = []
-		self.lossHistory = []
-		self.errorHistory = []
-		self.epochHistory = []
-		self.initialEpoch = 50000
+		self.batchSize = 100		# The size of the batches to use when training using mini batches
+		self.randomOrder = []		# List used to choose random data points to train with when using mini batches
+		self.lossHistory = []		# Keeps track of the loss history for graphing purposes
+		self.errorHistory = []		# Keeps track of the error history for graphing purposes
+		self.epochHistory = []		# Keeps track of the epoch history for graphing purposes
+		self.initialEpoch = 50000	# The number of epochs to train over
 
 		# Th matrix of weights
 		# Each entry is connection between layers
@@ -58,9 +58,54 @@ class Net:
 	# <epochs> <input shape> <hidden layer 1 shape> ... <output shape>
 	def printUsage(self):
 		print "USAGE:"
-		print "python MLP.py <data file> <activation function> <learning type> <learning rate> <epochs> <input shape> <hidden layer 1 shape> ... <output shape>\n"
-		print "current working activation functions are \"tanh\", \"sigmoid\", \"ReLU\", and \"LReLU\"."
-		print "learning type choices are \"batch\" and \"stochastic\".\n"
+		print "python MLP.py <data file> <arg 1> <arg 2> ..."
+		print "\"data file\" and \"layers\" argument are required."
+		print "Use -help or -h for more information on arguments."
+
+	def printHelp(self):
+		while(True):
+			print "HELP MENU"
+			print "1) activation functions"
+			print "2) training type"
+			print "3) training values"
+			print "4) neural net layer shapes"
+			print "5) help"
+			print "q - quit help"
+			selection = raw_input()
+			
+			if selection == "q" or selection == "quit":
+				sys.exit(0)
+
+			selection = int(selection)
+
+			if selection == 1:
+				print "\nACTIVATION FUNCTIONS"
+				print "tanh"
+				print "sigmoid"
+				print "relu"
+				print "lrelu"
+
+			if selection == 2:
+				print "\nTraining Type"
+				print "batch"
+				print "minibatch"
+				print "stochastic"
+
+			if selection == 3:
+				print "\nTraining Values"
+				print "lr=<value>"
+				print "epochs=<value>"
+
+			if selection == 4:
+				print "\nLayer Shapes"
+				print "layers=<layer1 size>,<layer2 size>,<layer3 size>..."
+
+			if selection == 5:
+				print "\nMore Help"
+				print "input index of desired help menu item to get a list of related arguments"
+
+			print "press any key to continue"
+			raw_input()
 
 	#Print the weights and layers of the neural net
 	def printNet(self):
@@ -151,6 +196,10 @@ class Net:
 		if len(sys.argv) < 2:
 			print "not enough args."
 			self.printUsage()
+			sys.exit(0)
+
+		if "-help" in self.data or "-h" in self.data:
+			self.printHelp()
 			sys.exit(0)
 
 		try:
