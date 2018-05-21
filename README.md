@@ -19,7 +19,10 @@ An attempt at understanding and building a basic neural net. Currently written u
 
 ## MLP.py:
 ### Usage:
-	python MLP.py <data file> <activation function> <learning type> <learning rate> <training epochs> <input layer size> <hidden layer 1 size> ... <output layer size>
+	python MLP.py <data file> <arg1> <arg2> <arg3> ...
+The data file and layers arguments are required.
+
+Use the -h/-help flag for more information on arguments.	
 
 ## MLP3.py:
 ### Usage:
