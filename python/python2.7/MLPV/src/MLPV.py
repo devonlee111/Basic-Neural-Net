@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
+import threading
 import sys
 
 class Net:
@@ -8,6 +9,8 @@ class Net:
 	def __init__(self):
 		self.args = []
 		self.init = False
+
+		self.lock = threading.Lock()
 
 		# The activation function to use for each layer
 		# 0 = tanh function
@@ -56,6 +59,8 @@ class Net:
 		# Each entry is a bias for a layer
 		self.biases = []
 
+		self.run = False
+
 	#----------------------------------------#
 	######## Initialization Functions ########
 	#----------------------------------------#
@@ -92,6 +97,7 @@ class Net:
 		self.biases = []
 		self.init = False
 		self.batchSize = 100
+		self.run = False
 
 	# Returns the shape of the neural net
 	def getShape(self):
@@ -212,7 +218,7 @@ class Net:
 		return self.epochElapsed
 
 	def shouldContinue(self):
-		if self.epochElapsed >= self.epochs or self.checkOutput() == 1:
+		if self.epochElapsed >= self.epochs or self.checkOutput() == 1 or self.run == False:
 			return False
 
 		return True
@@ -221,7 +227,8 @@ class Net:
 		self.error = (float)(error)
 
 	def getError(self):
-		return np.mean(np.abs(self.currentError))
+		error = self.currentError
+		return np.mean(np.abs(error))
 
 	def getLoss(self):
 		return self.loss
@@ -281,6 +288,15 @@ class Net:
 		self.setLearningRate(lr)
 		self.setMaxEpochs(epochs)
 		self.setError(error)
+
+	def startNet(self):
+		self.run = True
+
+	def stopNet(self):
+		self.run = False
+
+	def isRunning(self):
+		return self.run
 
 	# Sigmoid Activation Function
 	def sigmoid(self, x):
@@ -473,3 +489,7 @@ class Net:
 				self.neurons[0][index] = self.x[self.randomOrder[index]]
 
 		self.prevDelta = temp
+
+	def train(self):
+		while(self.shouldContinue()):
+			self.trainingPass()

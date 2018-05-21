@@ -33,11 +33,12 @@ class Net:
 		self.currentOutput = []		# The current output for all training data points. Updated individually for stochastic learning
 		self.totalEpochs = 0		# The total number of epochs to train over per session
 		self.trainingInput = 0		# The current input values for training (only used in stochastic training)
-		self.batchSize = 100
-		self.randomOrder = []
-		self.lossHistory = []
-		self.errorHistory = []
-		self.epochHistory = []
+		self.batchSize = 100		# The size of the batches to use when training using mini batches
+		self.randomOrder = []		# List used to choose random data points to train with when using mini batches
+		self.lossHistory = []		# Keeps track of the loss history for graphing purposes
+		self.errorHistory = []		# Keeps track of the error history for graphing purposes
+		self.epochHistory = []		# Keeps track of the epoch history for graphing purposes
+		self.initialEpoch = 50000	# The number of epochs to train over
 
 		# Th matrix of weights
 		# Each entry is connection between layers
@@ -57,9 +58,54 @@ class Net:
 	# <epochs> <input shape> <hidden layer 1 shape> ... <output shape>
 	def printUsage(self):
 		print "USAGE:"
-		print "python MLP.py <data file> <activation function> <learning type> <learning rate> <epochs> <input shape> <hidden layer 1 shape> ... <output shape>\n"
-		print "current working activation functions are \"tanh\", \"sigmoid\", \"ReLU\", and \"LReLU\"."
-		print "learning type choices are \"batch\" and \"stochastic\".\n"
+		print "python MLP.py <data file> <arg 1> <arg 2> ..."
+		print "\"data file\" and \"layers\" argument are required."
+		print "Use -help or -h for more information on arguments."
+
+	def printHelp(self):
+		while(True):
+			print "HELP MENU"
+			print "1) activation functions"
+			print "2) training type"
+			print "3) training values"
+			print "4) neural net layer shapes"
+			print "5) help"
+			print "q - quit help"
+			selection = raw_input()
+			
+			if selection == "q" or selection == "quit":
+				sys.exit(0)
+
+			selection = int(selection)
+
+			if selection == 1:
+				print "\nACTIVATION FUNCTIONS"
+				print "tanh"
+				print "sigmoid"
+				print "relu"
+				print "lrelu"
+
+			if selection == 2:
+				print "\nTraining Type"
+				print "batch"
+				print "minibatch"
+				print "stochastic"
+
+			if selection == 3:
+				print "\nTraining Values"
+				print "lr=<value>"
+				print "epochs=<value>"
+
+			if selection == 4:
+				print "\nLayer Shapes"
+				print "layers=<layer1 size>,<layer2 size>,<layer3 size>..."
+
+			if selection == 5:
+				print "\nMore Help"
+				print "input index of desired help menu item to get a list of related arguments"
+
+			print "press any key to continue"
+			raw_input()
 
 	#Print the weights and layers of the neural net
 	def printNet(self):
@@ -83,8 +129,8 @@ class Net:
 	# Initialize the y matrix with training data answers
 	# Print an error if the matrix size doesnt match with the data
 	# Print an error if there is an error in the training data
-	def initTrainingData(self, trainingData):
-		dataSize = (int)(trainingData.readline())	# Get size of training data to use
+	def initTrainingData(self):
+		dataSize = (int)(self.trainingData.readline())	# Get size of training data to use
 		temp = []
 		temp2 = []
 		tempy = []					# Holds the explicit answers to the training data
@@ -92,7 +138,7 @@ class Net:
 
 		for dataPoint in range(0, dataSize):
 			self.randomOrder.append(dataPoint)
-			line = trainingData.readline()		# Get next line of training data
+			line = self.trainingData.readline()		# Get next line of training data
 			line = line.rstrip("\n")
 
 			if not line:
@@ -103,7 +149,7 @@ class Net:
 			data = trainingInfo[0].split(",")
 			answer = trainingInfo[1]
 
-			if len(data) != (int)(self.data[6]):
+			if len(data) != self.shape[0]:
 				print "The Training Data File Is Incorrectly Formated\n"
 				sys.exit(0)
 
@@ -147,9 +193,13 @@ class Net:
 	# Set global arguments base on given arguments
 	# Print error and usage if argument list is invalid
 	def parseArgs(self):
-		if len(sys.argv) == 1:
+		if len(sys.argv) < 2:
 			print "not enough args."
 			self.printUsage()
+			sys.exit(0)
+
+		if "-help" in self.data or "-h" in self.data:
+			self.printHelp()
 			sys.exit(0)
 
 		try:
@@ -160,47 +210,96 @@ class Net:
 			self.printUsage()
 			sys.exit(0)
 
-		if self.data[2] == "tanh":
-			self.activationFunction = 0
+		numActivationFunction = 0
+		numLearningType = 0
+		numLearningRate = 0
+		numGivenEpochs = 0
+		numBatchSize = 0
 
-		elif self.data[2] == "sigmoid":
-			self.activationFunction = 1
+		for index in range(2, len(self.data)):
+			arg = self.data[index]
+			
+			if arg == "tanh":
+				self.activationFunction = 0
+				numActivationFunction += 1
 
-		elif self.data[2] == "relu" or self.data[2] == "ReLU":
-			self.activationFunction = 2
+			elif arg == "sigmoid":
+				self.activationFunction = 1
+				numActivationFunction += 1
 
-		elif self.data[2] == "lrelu" or self.data[2] == "LReLU":
-			self.activationFunction = 3
+			elif arg == "relu" or self.data[2] == "ReLU":
+				self.activationFunction = 2
+				numActivationFunction += 1
 
-		else:
-			print str(self.data[2]) + " is not a known activation function.\n"
-			self.printUsage()
+			elif arg == "lrelu" or self.data[2] == "LReLU":
+				self.activationFunction = 3
+				numActivationFunction += 1
+
+			elif arg == "batch":
+				self.learningType = 0
+				numLearningType += 1
+
+			elif arg == "stochastic":
+				self.learningType = 1
+				numLearningType += 1
+
+			elif arg == "mini batch" or arg == "minibatch" or arg == "mbatch" or arg == "minib":
+				self.learningType = 2
+				numLearningType += 1
+
+			elif "batchsize=" in arg:
+				self.batchSize = int(arg.split("=")[1])
+				numBatchSize += 1
+
+			elif "lr=" in arg:
+				self.lr = float(arg.split("=")[1])
+				numLearningRate += 1
+
+			elif "epochs=" in arg:
+				self.initialEpoch = int(arg.split("=")[1])
+				numGivenEpochs += 1
+
+			elif "layers=" in arg:
+				layerSizes = arg.split("=")[1]
+				layerSizes = layerSizes.split(",")
+				self.layers = len(layerSizes)
+
+				if len(layerSizes) < 3:
+					print "Neural net must have at least 3 layers(input, hidden, output).\n"
+					self.printUsage()
+					sys.exit(0)
+
+				for layer in range(0, len(layerSizes)):
+					self.shape.append((int)(layerSizes[layer]))
+
+		if numActivationFunction > 1:
+			print "Only One Activation Function May Be Specified!"
+			print "Found " + str(numActivationFunction) + " Activation Functions."
+			sys.exit(0)
+		
+		if numLearningType > 1:
+			print "Only One Learning Type May Be Specified!"
+			print "Found " + str(numLearningType) + " Learning Types."
 			sys.exit(0)
 
-		if self.data[3] == "batch":
-			self.learningType = 0
-
-		elif self.data[3] == "stochastic":
-			self.learningType = 1
-
-		elif self.data[3] == "mini batch" or self.data[3] == "minibatch" or self.data[3] == "mbatch" or self.data == "minib":
-			self.learningType = 2
-
-		self.lr = float(self.data[4])
-
-		self.initialEpoch = int(self.data[5])
-
-		self.layers = len(self.data) - 6
-		if self.layers < 3:
-			print "Neural net must have at least 3 layers(input, hidden, output).\n"
-			self.printUsage()
+		if numLearningRate > 1:
+			print "Only One Learning Rate May Be Specified!"
+			print "Found " + str(numLearningRate) + " Learning Rate."
 			sys.exit(0)
 
-		for layerSize in range(6, len(self.data)):
-			self.shape.append((int)(self.data[layerSize]))
+		if numGivenEpochs > 1:
+			print "Only One Epoch Value May Be Specified!"
+			print "Found " + str(numGivenEpochs) + " Epoch Values."
+			sys.exit(0)
 
-		self.initTrainingData(self.trainingData)
-		return True
+		if numBatchSize > 1:
+			print "Only One Batch Size Value May Be Specified!"
+			print "Found " + str(numBatchSize) + " Batch Sizes."
+			sys.exit(0)
+
+		if len(self.shape) == 0:
+			print "Neural Net Shape Must Be Specified!"
+			sys.exit(0)
 
 	# Initialized Weight List using a normal distribution
 	def initWeights(self):
@@ -239,8 +338,9 @@ class Net:
 
 	# Fully initialize Neural Net
 	def initNeuralNet(self):
-		print "Start Init"
+		#print "Start Init"
 		self.parseArgs()
+		self.initTrainingData()
 		self.initWeights()
 		self.initNeurons()
 		self.initBiases()
@@ -253,7 +353,6 @@ class Net:
 		#print "\ny\n" + str(self.y)
 		#print "\ncurrent output\n" + str(self.currentOutput)
 		#print "\ncurrentError\n" + str(self.currentError)
-
 
 	#----------------------------------------------------#
 	################ Activation Functions ################
