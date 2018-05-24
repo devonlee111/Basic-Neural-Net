@@ -20,8 +20,10 @@ class Net:
 		# 2 = minibatches
 		self.learningType = 0
 
-		self.x = []			# Matrix of the all training data inputs
-		self.y = []			# one hot Matrix of answers to training data
+		self.x = []			# Matrix of all training data inputs
+		self.y = []			# one hot matrix of answers to training data
+		self.testInputs = []		# Matrix of all testing data inputs
+		self.testHot = []		# one hot matrix of answers to testing input
 		self.labels = dict()		# Dictionary linking index of one hot value to answer
 		self.layers = 0			# The number of layers in the neural net
 		self.shape = []			# The number of neurons in each layer
@@ -39,6 +41,9 @@ class Net:
 		self.errorHistory = []		# Keeps track of the error history for graphing purposes
 		self.epochHistory = []		# Keeps track of the epoch history for graphing purposes
 		self.initialEpoch = 50000	# The number of epochs to train over
+		self.trainingData = None
+		self.testingData = None
+
 
 		# Th matrix of weights
 		# Each entry is connection between layers
@@ -62,6 +67,8 @@ class Net:
 		print "\"data file\" and \"layers\" argument are required."
 		print "Use -help or -h for more information on arguments."
 
+	# Show the help menu to the user
+	# Gives information on different program arguments
 	def printHelp(self):
 		while(True):
 			print "HELP MENU"
@@ -95,6 +102,7 @@ class Net:
 				print "\nTraining Values"
 				print "lr=<value>"
 				print "epochs=<value>"
+				print "batchsize=<value>"
 
 			if selection == 4:
 				print "\nLayer Shapes"
@@ -172,22 +180,47 @@ class Net:
 			self.neurons.append(np.array(temp2))
 
 		self.x = np.array(temp)					# Initialize array of input training data
-		self.yOneHot(distinctLabels, tempy)			# Generate one hot values for answers from explicit answers
+		self.y = self.oneHot(distinctLabels, tempy)			# Generate one hot values for answers from explicit answers
+
+	def initTestingData(self):
+		dataSize = (int)(self.testingData.readline())
+		temp = []
+		answers = []
+
+		for dataPoint in range(0, dataSize):
+			line = self.testingData.readline()
+			line = line.rstrip("\n")
+
+			if not line:
+				print "The Testing Data File Is Incorrectly Formatted\n"
+				sys.exit(0)
+
+			testingInfo = line.split(":")
+			data = testingInfo[0].split(",")
+			answer = testingInfo[1]
+
+			data = map(float, data)
+			temp.append(data)
+			answers.append(answer)
+
+		self.testInputs = np.array(temp)
+		self.testHot = self.oneHot(len(self.labels), answers)
 
 	# Initialize one hot values for all training outputs (y)
 	# Takes in training outputs with explicit values
-	def yOneHot(self, numLabels, y):
+	def oneHot(self, numLabels, y):
+		onehot = []
 		for index in range(0, len(y)):
 			answer = np.zeros(numLabels)
 			temp = 0
 			for label in self.labels.values():
 				if label == y[index]:
 					answer[temp] = 1
-					self.y.append(np.array(answer))
+					onehot.append(np.array(answer))
 					break
 				temp += 1
 
-		self.y = np.array(self.y)
+		return np.array(onehot)
 	
 	# Read user given argumnts
 	# Set global arguments base on given arguments
@@ -272,6 +305,15 @@ class Net:
 				for layer in range(0, len(layerSizes)):
 					self.shape.append((int)(layerSizes[layer]))
 
+			elif "testfile=" in arg:
+				try:
+					self.testingData = open(self.data[1], 'r')
+
+				except IOError:
+					print "The Given Training Data File, " + str(self.data[1]) + ", Could Not Be Found Or Opened\n"
+					self.printUsage()
+					sys.exit(0)
+
 		if numActivationFunction > 1:
 			print "Only One Activation Function May Be Specified!"
 			print "Found " + str(numActivationFunction) + " Activation Functions."
@@ -341,6 +383,10 @@ class Net:
 		#print "Start Init"
 		self.parseArgs()
 		self.initTrainingData()
+
+		if self.testingData is not None:
+			self.initTestingData()
+
 		self.initWeights()
 		self.initNeurons()
 		self.initBiases()
@@ -403,9 +449,9 @@ class Net:
 		return numerator
 
 	# Cross Entropy Log Loss Function
-	def crossEntropy(self, x):
-		m = self.y.shape[0]
-		loss = -np.sum(self.y * np.log(x + 1e-12)) / m
+	def crossEntropy(self, x, y):
+		m = y.shape[0]
+		loss = -np.sum(y * np.log(x + 1e-12)) / m
 		return loss
 
 	#----------------------------------------#
@@ -414,8 +460,8 @@ class Net:
 
 	# Check to see if the desired accuracy has been achieved
 	# To be used for simple linear classification
-	def checkOutput(self):
-		if np.mean(np.abs(self.currentError)) < self.desiredAccuracy:
+	def checkOutput(self, error):
+		if np.mean(np.abs(error)) < self.desiredAccuracy:
 			return 1
 
 		return 0
@@ -509,7 +555,6 @@ class Net:
 	# Train the neural net on a data set
 	def train(self, requestedEpoch):
 		epochElapsed = 0
-		consecErrorReached = 0
 
 		if requestedEpoch == None:
 			self.maxEpoch = self.initialEpoch
@@ -525,23 +570,7 @@ class Net:
 			#Check if we reached desired accuracy
 			if epochElapsed == self.maxEpoch:
 				break
-
-			#Inccrease epoch elapsed
-			epochElapsed += 1
-
-			#Print the error every 10000 epochs
-			#if epochElapsed % 10000 == 0 or epochElapsed == 1:
-			#	print "Current Session Epoch: " + str(self.totalEpochs + epochElapsed) + " | Error:" + str(np.mean(np.abs(self.currentError)))	
-
-			if epochElapsed % 100 == 0:
-				loss = self.crossEntropy(self.currentOutput)
-				error = np.mean(np.abs(self.currentError))
-				self.lossHistory.append(loss)
-				self.errorHistory.append(error)
-				self.epochHistory.append(epochElapsed)
-				sys.stdout.write("Epoch: %d \t| Loss: %.4f | Error: %.4f\r" % (self.totalEpochs + epochElapsed, loss, error))
-				sys.stdout.flush()
-
+	
 			#Back Propagation
 			delta = None
 			temp = []
@@ -562,19 +591,47 @@ class Net:
 				for index in range(0, self.batchSize):
 					 self.neurons[0][index] = self.x[self.randomOrder[index]]
 
-				#self.trainingInput = np.random.randint(0, len(self.x) - self.batchSize, None)
-				#self.neurons[0] = self.x[self.trainingInput:self.trainingInput + self.batchSize]
-
-			if self.checkOutput():
-				break
-
 			self.prevDelta = temp
+
+			#Inccrease epoch elapsed
+			epochElapsed += 1
+
+			if epochElapsed % 100 == 0:
+				if self.testingData != None:
+					error = self.testingPass(epochElapsed)
+
+				else :
+					loss = self.crossEntropy(self.currentOutput, self.y)
+					error = np.mean(np.abs(self.currentError))
+					self.printTrainingStatus(loss, error, epochElapsed)
+
+				if self.checkOutput(error):
+					break
 
 		self.totalEpochs += epochElapsed
 		print "\nNumber of epochs in current training session: ",
 		print epochElapsed
 		print "Total epochs over all training sessions: ",
 		print self.totalEpochs
+
+	def testingPass(self, epochElapsed):
+		self.neurons[1] = self.forwardPass(self.testInputs, self.weights[0], self.biases[0], False)
+		
+		for layer in range(1, self.layers - 1):
+			self.neurons[layer + 1] = self.forwardPass(self.neurons[layer], self.weights[layer], self.biases[layer], layer == self.layers - 2)
+
+		error = self.testHot - self.neurons[self.layers - 1]
+		error = np.mean(np.abs(error))
+		loss = self.crossEntropy(self.currentOutput, self.y)
+		self.printTrainingStatus(loss, error, epochElapsed)
+		return error
+
+	def printTrainingStatus(self, loss, error, epochElapsed):
+		self.lossHistory.append(loss)
+		self.errorHistory.append(error)
+		self.epochHistory.append(epochElapsed)
+		sys.stdout.write("Epoch: %d \t| Loss: %.4f | Error: %.4f\r" % (self.totalEpochs + epochElapsed, loss, error))
+		sys.stdout.flush()
 
 	def run(self):
 		while True:
@@ -628,7 +685,19 @@ class Net:
 				self.printNet()
 
 			elif userCommand == "error":
-				print "Error:" + str(np.mean(np.abs(self.currentError)))
+				if self.testingData != None:
+					self.neurons[1] = self.forwardPass(self.testInputs, self.weights[0], self.biases[0], False)
+
+					for layer in range(1, self.layers - 1):
+						self.neurons[layer + 1] = self.forwardPass(self.neurons[layer], self.weights[layer], self.biases[layer], layer == self.layers - 2)
+
+					error = self.testHot - self.neurons[self.layers - 1]
+					error = np.mean(np.abs(error))
+	
+				else:
+					error = np.mean(np.abs(self.currentError))
+
+				print "Error:" + str(error)
 
 			elif userCommand == "graph":	
 				errorPlot, = plt.plot(self.epochHistory, self.errorHistory, marker = 'o', label = 'Error')
