@@ -74,9 +74,10 @@ class Net:
 			print "HELP MENU"
 			print "1) activation functions"
 			print "2) training type"
-			print "3) training values"
+			print "3) training parameters"
 			print "4) neural net layer shapes"
-			print "5) help"
+			print "5) test file"
+			print "6) help"
 			print "q - quit help"
 			selection = raw_input()
 			
@@ -92,23 +93,28 @@ class Net:
 				print "relu"
 				print "lrelu"
 
-			if selection == 2:
+			elif selection == 2:
 				print "\nTraining Type"
 				print "batch"
 				print "minibatch"
 				print "stochastic"
 
-			if selection == 3:
-				print "\nTraining Values"
+			elif selection == 3:
+				print "\nTraining Parameters"
 				print "lr=<value>"
 				print "epochs=<value>"
 				print "batchsize=<value>"
+				print "testfile=<path>"
 
-			if selection == 4:
+			elif selection == 4:
 				print "\nLayer Shapes"
 				print "layers=<layer1 size>,<layer2 size>,<layer3 size>..."
 
-			if selection == 5:
+			elif selection == 5:
+				print "\nTest File"
+				print "testfile=<path>\tUsed to get a more accurate error and loss by more accurately tracking learning progress"
+
+			elif selection == 6:
 				print "\nMore Help"
 				print "input index of desired help menu item to get a list of related arguments"
 
