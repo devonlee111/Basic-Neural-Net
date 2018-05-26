@@ -6,9 +6,9 @@ from PIL import Image
 def printHelp():
 	print "Help"
 	print "USAGE:"
-	print "python image_processor.py <infile> <outfile> <compression rate>"
+	print "python image_processor.py <infile> <outfile> <compression rate/new size>"
 	print "Optional compression rate argument should be given as decimal from 0 - 1. Image will be reduced to specified percentage of original before data conversion."
-
+	print "New size should be smaller than original size and be in the form of width,height."
 numArgs = len(sys.argv)
 
 if numArgs < 3:
@@ -21,17 +21,33 @@ elif numArgs > 4:
 	printHelp()
 	sys.exit()
 
-compress = False
+compress = 0
 compressionRate = None
 
 if numArgs == 4:
-	try:
-		compressionRate = float(sys.argv[3])
-		compress = True
+	if "," in sys.argv[3]:
+		size = sys.argv[3].split(",")
 
-	except:
-		print "Encountered Unexpected Argument"
-		sys.exit()
+		if len(size) > 2:
+			print "Invalid new size"
+			sys.exit()
+
+		compressionRate = map(int, size)
+		compress = 1
+
+	else:
+		try:
+			compressionRate = float(sys.argv[3])
+
+			if compressionRate >= 1 or compressionRate <= 0:
+				print "Compression rate must be from 0 - 1."
+				sys.exit()
+
+			compress = 2
+
+		except:
+			print "Encountered Unexpected Argument"
+			sys.exit()
 
 path = sys.argv[1]
 outFile = open(sys.argv[2], "w+")
@@ -39,11 +55,21 @@ outFile = open(sys.argv[2], "w+")
 try:
 	image = Image.open(path)
 
-	if compress:
+	if compress == 1:
+		if compressionRate[0] > image.size[0] or compressionRate[1] > image.size[1]:
+			print "New image size must be less than old image size."
+			sys.exit()
+
+		elif compressionRate[0] <= 0 or compressionRate[1] <= 0:
+			print "New image size must have a positive value."
+			sys.exit()
+
+		image = image.resize((compressionRate[0], compressionRate[1]))
+
+	elif compress == 2:
 		image = image.resize((int(image.size[0] * compressionRate), int(image.size[1] * compressionRate)))
 
 	size = image.size
-	print size
 	width = size[0]
 	height = size[1]
 	newImage = image.convert('RGB')
@@ -71,10 +97,6 @@ except:
 	height = -1
 	numImages = 0
 
-	if len(sys.argv) == 4:
-		width = sys.argv[2]
-		height = sys.argv[3]
-
 	numImages = sum([len(files) for r, d, files in os.walk(path)])
 	outFile.write(str(numImages) + "\n")
 
@@ -83,6 +105,21 @@ except:
 			label = path.rsplit('/', 1)[-1]
 			filePath = os.path.join(path, name)
 			image = Image.open(filePath)
+
+			if compress == 1:
+				if compressionRate[0] > image.size[0] or compressionRate[1] > image.size[1]:
+					print "New image size must be less than old image size."
+					sys.exit()
+
+				elif compressionRate[0] <= 0 or compressionRate[1] <= 0:
+					print "New image size must have a positive value."
+					sys.exit()
+
+				image = image.resize((compressionRate[0], compressionRate[1]))
+
+			elif compress == 2:
+				image = image.resize((int(image.size[0] * compressionRate), int(image.size[1] * compressionRate)))
+
 			if width == -1 and height == -1:
 				size = image.size
 				width = size[0]
@@ -90,6 +127,7 @@ except:
 
 			else:
 				newWidth, newHeight = image.size
+
 				if newWidth != width or newHeight != height:
 					print "Images are not the same size\nCanceling image processing..."
 					sys.exit()
