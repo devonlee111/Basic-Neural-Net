@@ -1,30 +1,53 @@
 import os
 import sys
+from fractions import Fraction
 from PIL import Image
+
+def printHelp():
+	print "Help"
+	print "USAGE:"
+	print "python image_processor.py <infile> <outfile> <compression rate>"
+	print "Optional compression rate argument should be given as decimal from 0 - 1. Image will be reduced to specified percentage of original before data conversion."
 
 numArgs = len(sys.argv)
 
 if numArgs < 3:
 	print "Not Enough Arguments\n"
+	printHelp()
 	sys.exit()
 
-elif numArgs == 4:
-	print "Not Enough Arguments\n"
-	sys.exit()
-
-elif numArgs > 5:
+elif numArgs > 4:
 	print "Too many arguments\n"
+	printHelp()
 	sys.exit()
+
+compress = False
+compressionRate = None
+
+if numArgs == 4:
+	try:
+		compressionRate = float(sys.argv[3])
+		compress = True
+
+	except:
+		print "Encountered Unexpected Argument"
+		sys.exit()
 
 path = sys.argv[1]
 outFile = open(sys.argv[2], "w+")
 
 try:
 	image = Image.open(path)
+
+	if compress:
+		image = image.resize((int(image.size[0] * compressionRate), int(image.size[1] * compressionRate)))
+
 	size = image.size
+	print size
 	width = size[0]
 	height = size[1]
 	newImage = image.convert('RGB')
+
 	for x in range(0, width):
 		for y in range(0, height):
 			pix = newImage.getpixel((x,y))
@@ -33,13 +56,13 @@ try:
 			blue = pix[2]
 			grey = (red + green + blue) / 3
 			wb = 0
-			
+
 			if grey > 127:
 				wb = 1
-			
+
 			if x == 0 and y == 0:
 				outFile.write(str(wb))
-			
+
 			else:
 				outFile.write("," + str(wb))
 
