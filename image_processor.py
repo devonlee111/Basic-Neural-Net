@@ -16,38 +16,46 @@ if numArgs < 3:
 	printHelp()
 	sys.exit()
 
-elif numArgs > 4:
+elif numArgs > 5:
 	print "Too many arguments\n"
 	printHelp()
 	sys.exit()
 
 compress = 0
 compressionRate = None
+encodingType = 0
 
-if numArgs == 4:
-	if "," in sys.argv[3]:
-		size = sys.argv[3].split(",")
+if numArgs > 3 :
+	for index in range(3, len(sys.argv)):
+		if sys.argv[index] == "greyscale":
+			encodingType = 1
 
-		if len(size) > 2:
-			print "Invalid new size"
-			sys.exit()
+		elif sys.argv[index] == "colorscale":
+			encodingType = 2
 
-		compressionRate = map(int, size)
-		compress = 1
+		elif "," in sys.argv[index]:
+			size = sys.argv[index].split(",")
 
-	else:
-		try:
-			compressionRate = float(sys.argv[3])
-
-			if compressionRate >= 1 or compressionRate <= 0:
-				print "Compression rate must be from 0 - 1."
+			if len(size) > 2:
+				print "Invalid new size"
 				sys.exit()
 
-			compress = 2
+			compressionRate = map(int, size)
+			compress = 1
 
-		except:
-			print "Encountered Unexpected Argument"
-			sys.exit()
+		else:
+			try:
+				compressionRate = float(sys.argv[index])
+
+				if compressionRate >= 1 or compressionRate <= 0:
+					print "Compression rate must be from 0 - 1."
+					sys.exit()
+
+				compress = 2
+
+			except:
+				print "Encountered Unexpected Argument \"" + sys.argv[index] + "\""
+				sys.exit()
 
 path = sys.argv[1]
 outFile = open(sys.argv[2], "w+")
@@ -81,16 +89,34 @@ try:
 			green = pix[1]
 			blue = pix[2]
 			grey = (red + green + blue) / 3
+			redNormal = float((red - 0))/float((255 - 0))
+			greenNormal = float((green - 0))/float((255 - 0))
+			blueNormal = float((blue - 0))/float((255 - 0))
+			normalized = float((grey - 0))/float((255 - 0))
 			wb = 0
 
 			if grey > 127:
 				wb = 1
 
 			if x == 0 and y == 0:
-				outFile.write(str(wb))
+				if encodingType == 0:
+					outFile.write(str(wb))
+
+				elif encodingType == 1:
+					outFile.write(str("%.2f" % normalized))
+
+				elif encodingType == 2:
+					outFile.write(str("%.2f" % redNormal) + "," + str("%.2f" % greenNormal) + "," + str("%.2f" % blueNormal))
 
 			else:
-				outFile.write("," + str(wb))
+				if encodingType == 0:
+					outFile.write("," + str(wb))
+
+				elif encodingType == 1:
+					outFile.write("," + str("%.2f" % normalized))
+
+				elif encodingType == 2:
+					outFile.write("," + str("%.2f" % redNormal) + "," + str("%.2f" % greenNormal) + "," + str("%.2f" % blueNormal))
 
 except:
 	width = -1
@@ -139,16 +165,35 @@ except:
 					green = pix[1]
 					blue = pix[2]
 					grey = (red + green + blue) / 3
+					redNormal = float((red - 0))/float((255 - 0))
+					greenNormal = float((green - 0))/float((255 - 0))
+					blueNormal = float((blue - 0))/float((255 - 0))
+					normalized = float((grey - 0))/float((255 - 0))
 					wb = 0
 
 					if grey > 127:
 						wb = 1
-			
+
 					if x == 0 and y == 0:
-						outFile.write(str(wb))
+						if encodingType == 0:
+							outFile.write(str(wb))
+
+						elif encodingType == 1:
+							outFile.write(str("%.2f" % normalized))
+
+						elif encodingType == 2:
+							outFile.write(str("%.2f" % redNormal) + "," + str("%.2f" % greenNormal) + "," + str("%.2f" % blueNormal))
+
 					else:
-						outFile.write("," + str(wb))
-		
+						if encodingType == 0:
+							outFile.write("," + str(wb))
+
+						elif encodingType == 1:
+							outFile.write("," + str("%.2f" % normalized))
+
+						elif encodingType == 2:
+							outFile.write("," + str("%.2f" % redNormal) + "," + str("%.2f" % greenNormal) + "," + str("%.2f" % blueNormal))
+
 			numImages += 1
 			outFile.write(":" + label + "\n")
 
