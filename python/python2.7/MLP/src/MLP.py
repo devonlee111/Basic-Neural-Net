@@ -108,7 +108,7 @@ class Net:
 
 			elif selection == 4:
 				print "\nLayer Shapes"
-				print "layers=<layer1 size>,<layer2 size>,<layer3 size>..."
+				print "layers=<hidden layer 1 size>,<hidden layer 2 size>,<hidden layer 3 size>..."
 
 			elif selection == 5:
 				print "\nTest File"
@@ -163,8 +163,11 @@ class Net:
 			data = trainingInfo[0].split(",")
 			answer = trainingInfo[1]
 
-			if len(data) != self.shape[0]:
-				print "The Training Data File Is Incorrectly Formated\n"
+			if self.shape[0] == 0:
+				self.shape[0] = len(data)
+
+			elif len(data) != self.shape[0]:
+				print "The Training Data Have Differing Sizes\n"
 				sys.exit(0)
 
 			if answer not in tempy:
@@ -185,6 +188,7 @@ class Net:
 		else:							# Initialize input neurons wof stochastic training
 			self.neurons.append(np.array(temp2))
 
+		self.shape.append(distinctLabels)
 		self.x = np.array(temp)					# Initialize array of input training data
 		self.y = self.oneHot(distinctLabels, tempy)			# Generate one hot values for answers from explicit answers
 
@@ -301,12 +305,8 @@ class Net:
 			elif "layers=" in arg:
 				layerSizes = arg.split("=")[1]
 				layerSizes = layerSizes.split(",")
-				self.layers = len(layerSizes)
-
-				if len(layerSizes) < 3:
-					print "Neural net must have at least 3 layers(input, hidden, output).\n"
-					self.printUsage()
-					sys.exit(0)
+				self.layers = len(layerSizes) + 2
+				self.shape.append(0)
 
 				for layer in range(0, len(layerSizes)):
 					self.shape.append((int)(layerSizes[layer]))
