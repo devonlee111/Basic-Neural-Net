@@ -41,7 +41,11 @@ class Net:
 		self.epochs = 0			# The max number of epochs to train over
 
 		self.trainingInput = 0		# The current input values for training (only used in stochastic training)
-		self.batchSize = 100		# The size of the mini batch to use in training
+		self.batchSize = 100		# The size of the mini batch to us in training
+		self.randomOrder = []
+		self.lossHistory = []
+		self.errorHistory = []
+		self.epochHistory = []
 
 		# The matrix of weights
 		# Each entry is a connection between layers
@@ -157,7 +161,7 @@ class Net:
 		for index in range(0, len(y)):
 			answer = np.zeros(numLabels)
 			temp = 0
-			for label in self.labels.values():
+			for label in list(self.labels.values()):
 				if label == y[index]:
 					answer[temp] = 1
 					self.y.append(np.array(answer))
@@ -254,15 +258,15 @@ class Net:
 
 	def setShape(self, shape):
 		self.shape = shape.split()
-		self.shape =list(map(int, self.shape))
+		self.shape = list(map(int, self.shape))
 		self.layers = len(self.shape)
 
 	def setBatchSize(self, size):
 		self.batchSize = int(size)
 
 	def getBatchSize(self):
-		return self.batchSize	
-
+		return self.batchSize
+	
 	# Fully Initialized Neural Net
 	def initNeuralNet(self, lr, epochs, error, activationFunction, learningType, trainingData, shape, batchSize):
 		self.clearNet()
@@ -404,8 +408,12 @@ class Net:
 				self.currentError[self.trainingInput] = error
 
 			elif self.learningType == 2:
-				error = self.y[self.trainingInput : self.trainingInput + self.batchSize] - layer
-				self.currentError[self.trainingInput : self.trainingInput + self.batchSize] = error
+				error = []
+				for index in range(0, self.batchSize):
+					error.append(self.y[self.randomOrder[index]] - layer[index])
+					self.currentError[self.randomOrder[index]] = error[index]
+
+				error = np.array(error)
 
 			delta = error
 
@@ -442,7 +450,6 @@ class Net:
 	def trainingPass(self):
 		#Forward Propogation
 		for layer in range(0, self.layers - 1):
-			print(len(self.neurons[0]))
 			self.neurons[layer + 1] = self.forwardPass(self.neurons[layer], self.weights[layer], self.biases[layer], layer == self.layers - 2) 
 
 		if self.checkOutput() == 1:
@@ -453,7 +460,7 @@ class Net:
 		#Inccrease epoch elapsed
 		self.epochElapsed += 1
 		if self.epochElapsed % 100 == 0:
-		 	loss = self.crossEntropy(self.currentOutput)
+			loss = self.crossEntropy(self.currentOutput)
 			error = np.mean(np.abs(self.currentError))
 			self.lossHistory.append(loss)
 			self.errorHistory.append(error)

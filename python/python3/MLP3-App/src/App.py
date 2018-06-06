@@ -1,6 +1,7 @@
 import tkinter as tk
 import numpy as np
-from tkinter import filedialog
+import tkinter.filedialog
+import threading
 import MLPV3
 
 class App():
@@ -64,8 +65,8 @@ class App():
 		self.trainingMenu.grid(row = 7, column = 0, sticky = tk.W)	
 
 		self.batchSlider = tk.Scale(settingsFrame, label = "Mini Batch Size", from_ = 10, to = 1000, orient = tk.HORIZONTAL, length = 200, resolution = 10, command = self.setBatch)
-		self.batchSlider.grid(row = 8, column = 0, stick = tk.W)
-
+		self.batchSlider.grid(row = 8, column = 0, sticky = tk.W)
+		
 		self.batchInput = tk.Entry(settingsFrame)
 		self.batchInput.grid(row = 9, column = 0, sticky = tk.W)
 
@@ -110,7 +111,7 @@ class App():
 
 		self.infoText = []
 
-		self.net = MLPV3.Net()
+		self.net = MLPV.Net()
 
 	def setLearningRate(self, lr):
 		self.lrInput.delete(0, tk.END)
@@ -132,7 +133,7 @@ class App():
 		self.net.generateGraph(self.trainingData)
 
 	def selectTrainingData(self):
-		self.trainingData = filedialog.askopenfilename(initialdir = "/", title = "Select a file", filetypes = (("text files", "*.txt"),))
+		self.trainingData = tkinter.filedialog.askopenfilename(initialdir = "/", title = "Select a file", filetypes = (("text files", "*.txt"),))
 		self.dataFile.set(self.trainingData)
 
 	def setInputs(self):
@@ -161,7 +162,7 @@ class App():
 			print("Should not cointain alpha characters.")
 
 		else :
-			self.net.initNeuralNet(self.lr, self.epochs, self.error, self.activationFunction.get(), self.learningType.get(), self.trainingData, self.shape, self.batchSize)
+			self.net.initNeuralNet(self.lr, self.epochs, self.error, self.activationFunction.get(), self.learningType.get(), self.trainingData, self.shape, self.batchSize)	
 
 		self.drawNet()
 
@@ -176,8 +177,8 @@ class App():
 		shape = self.net.getShape()
 		layerDist = float(self.canvas.winfo_width()) / float(((len(shape)) + 1))
 		layers = []
-		nodeSize = 5
-		weightSize = 3
+		nodeSize = 1
+		weightSize = 1
 
 		for layer in range(len(shape)):
 			prevNodes = []
@@ -193,7 +194,7 @@ class App():
 				if layer > 0:
 					for prevNode in range(shape[layer - 1]):
 						line = self.canvas.create_line(layer * layerDist, layers[layer - 1][prevNode], layerPos, nodePos, fill = "blue", width = weightSize)
-						self.canvas.tag_lower(line)	
+						self.canvas.tag_lower(line)
 
 			layers.append(nodes)
 
