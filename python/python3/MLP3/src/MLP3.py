@@ -62,24 +62,24 @@ class Net:
 	# python MLP.py <data file> <activation function> <learning type> <learning rate> 
 	# <epochs> <input shape> <hidden layer 1 shape> ... <output shape>
 	def printUsage(self):
-		print "USAGE:"
-		print "python MLP.py <data file> <arg 1> <arg 2> ..."
-		print "\"data file\" and \"layers\" argument are required."
-		print "Use -help or -h for more information on arguments."
+		print("USAGE:")
+		print("python MLP.py <data file> <arg 1> <arg 2> ...")
+		print("\"data file\" and \"layers\" argument are required.")
+		print("Use -help or -h for more information on arguments.")
 
 	# Show the help menu to the user
 	# Gives information on different program arguments
 	def printHelp(self):
 		while(True):
-			print "HELP MENU"
-			print "1) activation functions"
-			print "2) training type"
-			print "3) training parameters"
-			print "4) neural net layer shapes"
-			print "5) test file"
-			print "6) help"
-			print "q - quit help"
-			selection = raw_input()
+			print("HELP MENU")
+			print("1) activation functions")
+			print("2) training type")
+			print("3) training parameters")
+			print("4) neural net layer shapes")
+			print("5) test file")
+			print("6) help")
+			print("q - quit help")
+			selection = input()
 			
 			if selection == "q" or selection == "quit":
 				sys.exit(0)
@@ -87,52 +87,52 @@ class Net:
 			selection = int(selection)
 
 			if selection == 1:
-				print "\nACTIVATION FUNCTIONS"
-				print "tanh"
-				print "sigmoid"
-				print "relu"
-				print "lrelu"
+				print("\nACTIVATION FUNCTIONS")
+				print("tanh")
+				print("sigmoid")
+				print("relu")
+				print("lrelu")
 
 			elif selection == 2:
-				print "\nTraining Type"
-				print "batch"
-				print "minibatch"
-				print "stochastic"
+				print("\nTraining Type")
+				print("batch")
+				print("minibatch")
+				print("stochastic")
 
 			elif selection == 3:
-				print "\nTraining Parameters"
-				print "lr=<value>"
-				print "epochs=<value>"
-				print "batchsize=<value>"
-				print "testfile=<path>"
+				print("\nTraining Parameters")
+				print("lr=<value>")
+				print("epochs=<value>")
+				print("batchsize=<value>")
+				print("testfile=<path>")
 
 			elif selection == 4:
-				print "\nLayer Shapes"
-				print "layers=<hidden layer 1 size>,<hidden layer 2 size>,<hidden layer 3 size>..."
+				print("\nLayer Shapes")
+				print("layers=<hidden layer 1 size>,<hidden layer 2 size>,<hidden layer 3 size>...")
 
 			elif selection == 5:
-				print "\nTest File"
-				print "testfile=<path>\tUsed to get a more accurate error and loss by more accurately tracking learning progress"
+				print("\nTest File")
+				print("testfile=<path>\tUsed to get a more accurate error and loss by more accurately tracking learning progress")
 
 			elif selection == 6:
-				print "\nMore Help"
-				print "input index of desired help menu item to get a list of related arguments"
+				print("\nMore Help")
+				print("input index of desired help menu item to get a list of related arguments")
 
-			print "press any key to continue"
-			raw_input()
+			print("press any key to continue")
+			input()
 
 	#Print the weights and layers of the neural net
 	def printNet(self):
-		print "\nneurons"
+		print("\nneurons")
 		for layer in range(0, self.layers):
-			print self.neurons[layer]
+			print(self.neurons[layer])
 
-		print "\nweights"
+		print("\nweights")
 		for layer in range(0, self.layers - 1):
-			print self.weights[layer]
+			print(self.weights[layer])
 
-		print "\nbiases"
-		print self.biases
+		print("\nbiases")
+		print(self.biases)
 
 	#----------------------------------------#
 	######## Initialization Functions ########
@@ -156,7 +156,7 @@ class Net:
 			line = line.rstrip("\n")
 
 			if not line:
-				print "The Training Data File Is Incorrectly Formated\n"
+				print("The Training Data File Is Incorrectly Formated\n")
 				sys.exit(0)
 
 			trainingInfo = line.split(":")		# Split line into both the input data and correct answer
@@ -167,14 +167,14 @@ class Net:
 				self.shape[0] = len(data)
 
 			elif len(data) != self.shape[0]:
-				print "The Training Data Have Differing Sizes\n"
+				print("The Training Data Have Differing Sizes\n")
 				sys.exit(0)
 
 			if answer not in tempy:
 				self.labels[distinctLabels] = answer	# Add label to labels with key index of 1 in onehot represntation
 				distinctLabels += 1
 					
-			data = map(float, data)
+			data = list(map(float, data))
 			temp.append(data)
 
 			if (self.learningType == 1 and dataPoint == 0) or (self.learningType == 2 and dataPoint < self.batchSize):
@@ -202,14 +202,14 @@ class Net:
 			line = line.rstrip("\n")
 
 			if not line:
-				print "The Testing Data File Is Incorrectly Formatted\n"
+				print("The Testing Data File Is Incorrectly Formatted\n")
 				sys.exit(0)
 
 			testingInfo = line.split(":")
 			data = testingInfo[0].split(",")
 			answer = testingInfo[1]
 
-			data = map(float, data)
+			data = list(map(float, data))
 			temp.append(data)
 			answers.append(answer)
 
@@ -223,7 +223,7 @@ class Net:
 		for index in range(0, len(y)):
 			answer = np.zeros(numLabels)
 			temp = 0
-			for label in self.labels.values():
+			for label in list(self.labels.values()):
 				if label == y[index]:
 					answer[temp] = 1
 					onehot.append(np.array(answer))
@@ -237,7 +237,7 @@ class Net:
 	# Print error and usage if argument list is invalid
 	def parseArgs(self):
 		if len(sys.argv) < 2:
-			print "not enough args."
+			print("not enough args.")
 			self.printUsage()
 			sys.exit(0)
 
@@ -249,7 +249,7 @@ class Net:
 			self.trainingData = open(self.data[1], 'r')
 
 		except IOError:
-			print "The Given Training Data File, " + str(self.data[1]) + ", Could Not Be Found Or Opened\n"
+			print("The Given Training Data File, " + str(self.data[1]) + ", Could Not Be Found Or Opened\n")
 			self.printUsage()
 			sys.exit(0)
 
@@ -316,37 +316,37 @@ class Net:
 					self.testingData = open(self.data[1], 'r')
 
 				except IOError:
-					print "The Given Training Data File, " + str(self.data[1]) + ", Could Not Be Found Or Opened\n"
+					print("The Given Training Data File, " + str(self.data[1]) + ", Could Not Be Found Or Opened\n")
 					self.printUsage()
 					sys.exit(0)
 
 		if numActivationFunction > 1:
-			print "Only One Activation Function May Be Specified!"
-			print "Found " + str(numActivationFunction) + " Activation Functions."
+			print("Only One Activation Function May Be Specified!")
+			print("Found " + str(numActivationFunction) + " Activation Functions.")
 			sys.exit(0)
 		
 		if numLearningType > 1:
-			print "Only One Learning Type May Be Specified!"
-			print "Found " + str(numLearningType) + " Learning Types."
+			print("Only One Learning Type May Be Specified!")
+			print("Found " + str(numLearningType) + " Learning Types.")
 			sys.exit(0)
 
 		if numLearningRate > 1:
-			print "Only One Learning Rate May Be Specified!"
-			print "Found " + str(numLearningRate) + " Learning Rate."
+			print("Only One Learning Rate May Be Specified!")
+			print("Found " + str(numLearningRate) + " Learning Rate.")
 			sys.exit(0)
 
 		if numGivenEpochs > 1:
-			print "Only One Epoch Value May Be Specified!"
-			print "Found " + str(numGivenEpochs) + " Epoch Values."
+			print("Only One Epoch Value May Be Specified!")
+			print("Found " + str(numGivenEpochs) + " Epoch Values.")
 			sys.exit(0)
 
 		if numBatchSize > 1:
-			print "Only One Batch Size Value May Be Specified!"
-			print "Found " + str(numBatchSize) + " Batch Sizes."
+			print("Only One Batch Size Value May Be Specified!")
+			print("Found " + str(numBatchSize) + " Batch Sizes.")
 			sys.exit(0)
 
 		if len(self.shape) == 0:
-			print "Neural Net Shape Must Be Specified!"
+			print("Neural Net Shape Must Be Specified!")
 			sys.exit(0)
 
 	# Initialized Weight List using a normal distribution
@@ -615,10 +615,10 @@ class Net:
 					break
 
 		self.totalEpochs += epochElapsed
-		print "\nNumber of epochs in current training session: ",
-		print epochElapsed
-		print "Total epochs over all training sessions: ",
-		print self.totalEpochs
+		print("\nNumber of epochs in current training session: ", end=' ')
+		print(epochElapsed)
+		print("Total epochs over all training sessions: ", end=' ')
+		print(self.totalEpochs)
 
 	def testingPass(self, epochElapsed):
 		self.neurons[1] = self.forwardPass(self.testInputs, self.weights[0], self.biases[0], False)
@@ -641,16 +641,16 @@ class Net:
 
 	def run(self):
 		while True:
-			userCommand = raw_input("\nNeural Net has finished its training. Here is a list of available commands.\n\"predict\"\tNeural Net is ready to process and predict your input.\n\"train\"\t\tNeural Net may be trained further.\n\"print\"\t\tPrint the values of the neural net.\n\"error\"\t\tPrint the current error.\n\"graph\"\t\tCreate a loss and error graph png\n\"quit\"\t\tQuit the program\n--> ")
+			userCommand = input("\nNeural Net has finished its training. Here is a list of available commands.\n\"predict\"\tNeural Net is ready to process and predict your input.\n\"train\"\t\tNeural Net may be trained further.\n\"print\"\t\tPrint the values of the neural net.\n\"error\"\t\tPrint the current error.\n\"graph\"\t\tCreate a loss and error graph png\n\"quit\"\t\tQuit the program\n--> ")
 			if userCommand == "quit" or userCommand == "exit" or userCommand == "q":
-				print "Thank you for using my neural net program.\n"
+				print("Thank you for using my neural net program.\n")
 				sys.exit(0)
 
 			elif userCommand == "predict":
 				inputs = []
 				isFile = False
 				for netInput in range(0, len(self.neurons[0][0])):
-					newInput = raw_input("Please enter the next input datum.\n")
+					newInput = input("Please enter the next input datum.\n")
 					try:
 						f = open(newInput, "r")
 						isFile = True
@@ -664,7 +664,7 @@ class Net:
 					line = f.readline()
 					line = line.rstrip("\n")
 					data = line.split(",")
-					data = map(float, data)
+					data = list(map(float, data))
 					inputs = np.array(data)
 
 				self.neurons[1] = self.forwardPass(inputs, self.weights[0], self.biases[0], False)
@@ -678,13 +678,13 @@ class Net:
 						maxProb = self.neurons[self.layers - 1][hot]
 						hotIndex = hot
 
-				print "\nPREDICTION: " + self.labels.get(hotIndex) + " | CONFIDENCE: " + str(maxProb)
+				print("\nPREDICTION: " + self.labels.get(hotIndex) + " | CONFIDENCE: " + str(maxProb))
 
 			elif userCommand == "train":
-				print "Previous desired accuracy was " + str(self.desiredAccuracy)
-				newAccuracy = input("Please enter a new desired accuracy value.\n")
+				print("Previous desired accuracy was " + str(self.desiredAccuracy))
+				newAccuracy = eval(input("Please enter a new desired accuracy value.\n"))
 				self.desiredAccuracy = newAccuracy
-				requestedEpochs = input("Please enter the maximum epochs to train over.\n")
+				requestedEpochs = eval(input("Please enter the maximum epochs to train over.\n"))
 				self.train(requestedEpochs)
 
 			elif userCommand == "print":
@@ -703,7 +703,7 @@ class Net:
 				else:
 					error = np.mean(np.abs(self.currentError))
 
-				print "Error:" + str(error)
+				print("Error:" + str(error))
 
 			elif userCommand == "graph":	
 				errorPlot, = plt.plot(self.epochHistory, self.errorHistory, marker = 'o', label = 'Error')
@@ -715,7 +715,7 @@ class Net:
 				plt.savefig('plot.png')			
 
 			else:
-				print "That is not a valid command.\n"
+				print("That is not a valid command.\n")
 
 net = Net()
 net.initNeuralNet()
